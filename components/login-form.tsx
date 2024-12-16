@@ -8,12 +8,14 @@ import { useRouter } from "next/navigation"; // Import useRouter
 import { useToast } from "@/hooks/use-toast";
 import { login } from "@/app/utils/auth";
 import {
+// import { Image } from 'next/image';
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import Image from "next/image"
 
 export function LoginForm({
   className,
@@ -34,9 +36,18 @@ export function LoginForm({
   // RETURN TSX
   return (
     <div className={cn("flex flex-col gap-6", className)} {...props}>
-      <Card className="py-8 md:py-12">
+      <Card className="pb-8">
         <CardHeader>
-          <CardTitle className="text-2xl text-center">Unisync</CardTitle>
+          <CardTitle className="text-2xl ">
+            <div className="flex flex-col justify-center items-center">
+              <div className="">
+                <Image src="/logo.svg" alt="Logo" width={80} height={20} />
+              </div> 
+              <div>
+                <p> Unisync </p>
+              </div>
+            </div>
+          </CardTitle>
           <CardDescription>
             Enter your email below to login to your account
           </CardDescription>
