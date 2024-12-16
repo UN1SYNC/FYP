@@ -9,6 +9,13 @@
     "lint": "next lint"
   },
   "dependencies": {
+<<<<<<< Updated upstream
+=======
+    "@hookform/resolvers": "^3.9.1",
+    "@radix-ui/react-label": "^2.1.1",
+    "@radix-ui/react-slot": "^1.1.1",
+    "@supabase/auth-helpers-nextjs": "^0.10.0",
+>>>>>>> Stashed changes
     "@supabase/ssr": "^0.5.2",
     "@supabase/supabase-js": "^2.47.7",
     "class-variance-authority": "^0.7.1",
@@ -17,8 +24,10 @@
     "next": "14.2.16",
     "react": "^18",
     "react-dom": "^18",
+    "react-hook-form": "^7.54.1",
     "tailwind-merge": "^2.5.5",
-    "tailwindcss-animate": "^1.0.7"
+    "tailwindcss-animate": "^1.0.7",
+    "zod": "^3.24.1"
   },
   "devDependencies": {
     "@types/node": "^20",
