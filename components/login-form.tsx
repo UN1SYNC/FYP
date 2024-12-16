@@ -7,9 +7,17 @@ import { Label } from "@/components/ui/label";
 import { useRouter } from "next/navigation"; // Import useRouter
 import { useToast } from "@/hooks/use-toast";
 import { login } from "@/app/utils/auth";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 
 export function LoginForm({
-  className
+  className,
+  ...props
 }: React.ComponentPropsWithoutRef<"form">) {
   const [email, setEmail] = useState<string | null>(null);
   const [password, setPassword] = useState<string | null>(null);
@@ -25,45 +33,52 @@ export function LoginForm({
 
   // RETURN TSX
   return (
-    <div className={cn("flex flex-col gap-6", className)}>
-      <div className="flex flex-col items-center gap-2 text-center">
-        <h1 className="text-2xl font-bold">Login to your account</h1>
-        <p className="text-balance text-sm text-muted-foreground">
-          Enter your username below to login to your account
-        </p>
-      </div>
-      <div className="grid gap-6">
-        <div className="grid gap-2">
-          <Label htmlFor="email">Email</Label>
-          <Input
-            onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-              setEmail(e.target.value)
-            }
-            id="email"
-            type="email"
-            autoComplete="email"
-            placeholder="Enter your email"
-            required
-          />
-        </div>
-        <div className="grid gap-2">
-          <div className="flex items-center">
-            <Label htmlFor="password">Password</Label>
+    <div className={cn("flex flex-col gap-6", className)} {...props}>
+      <Card className="py-8 md:py-12">
+        <CardHeader>
+          <CardTitle className="text-2xl text-center">Unisync</CardTitle>
+          <CardDescription>
+            Enter your email below to login to your account
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div>
+            <div className="flex flex-col gap-6">
+              <div className="grid gap-2">
+                <Label htmlFor="email">Email</Label>
+                <Input
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                    setEmail(e.target.value)
+                  }
+                  id="email"
+                  type="email"
+                  autoComplete="email"
+                  placeholder="Enter your email"
+                  required
+                />
+              </div>
+              <div className="grid gap-2">
+                <div className="flex items-center">
+                  <Label htmlFor="password">Password</Label>
+                </div>
+
+                <Input
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                    setPassword(e.target.value)
+                  }
+                  autoComplete="password"
+                  id="password"
+                  type="password"
+                  required
+                />
+              </div>
+              <Button onClick={handleLoginButton} className="w-full">
+                Login
+              </Button>
+            </div>
           </div>
-          <Input
-            onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-              setPassword(e.target.value)
-            }
-            id="password"
-            type="password"
-            autoComplete="password"
-            required
-          />
-        </div>
-        <Button onClick={handleLoginButton} className="w-full">
-          Login
-        </Button>
-      </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }
