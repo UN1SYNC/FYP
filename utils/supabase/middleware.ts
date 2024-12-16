@@ -70,6 +70,9 @@ export async function updateSession(request: NextRequest) {
   if (!user && protectedRoutes.includes(request.nextUrl.pathname)) {
     return NextResponse.redirect(new URL('/', request.url));
   }
+  if (user && request.nextUrl.pathname === '/') {
+    return NextResponse.redirect(new URL('/dashboard', request.url));
+  }
 
   return supabaseResponse;
 }
