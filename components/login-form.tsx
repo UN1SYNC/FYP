@@ -8,12 +8,14 @@ import { useRouter } from "next/navigation"; // Import useRouter
 import { useToast } from "@/hooks/use-toast";
 import { login } from "@/app/utils/auth";
 import {
+  // import { Image } from 'next/image';
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import Image from "next/image";
 
 export function LoginForm({
   className,
@@ -21,22 +23,53 @@ export function LoginForm({
 }: React.ComponentPropsWithoutRef<"form">) {
   const [email, setEmail] = useState<string | null>(null);
   const [password, setPassword] = useState<string | null>(null);
+  const [isLoggingIn, setIsLoggingIn] = useState<boolean>(false); // State to track login process
   const router = useRouter(); // Use useRouter to get the router
   const { toast } = useToast(); // Use useToast to get the toast
 
-  // HANDLE LOGIN SUBMIT FUNTION
+  // HANDLE LOGIN SUBMIT FUNCTION
   const handleLoginButton = async () => {
-    if (email && password) {
-      login(email, password, router, toast); // Call the login function
+    // Check if email or password is empty
+    if (!email || !password) {
+      toast({
+        title: "Error",
+        description: "Email and password are required.",
+        className: "bg-red-500 border-red-500 text-white",
+        duration: 1000,
+      });
+      return; // Stop further execution if fields are empty
+    }
+    setIsLoggingIn(true); // Start spinning logo
+    try {
+      await login(email, password, router, toast); // Perform login
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setIsLoggingIn(false); // Stop spinning logo after login attempt
     }
   };
 
   // RETURN TSX
   return (
     <div className={cn("flex flex-col gap-6", className)} {...props}>
-      <Card className="py-8 md:py-12">
+      <Card className="pb-8">
         <CardHeader>
-          <CardTitle className="text-2xl text-center">Unisync</CardTitle>
+          <CardTitle className="text-2xl">
+            <div className="flex flex-col justify-center items-center">
+              <div className="">
+                <Image
+                  src="/logo.svg"
+                  alt="Logo"
+                  width={80}
+                  height={80}
+                  className={isLoggingIn ? "animate-spin" : ""} // Conditionally apply rotation
+                />
+              </div>
+              <div>
+                <p> Unisync </p>
+              </div>
+            </div>
+          </CardTitle>
           <CardDescription>
             Enter your email below to login to your account
           </CardDescription>
