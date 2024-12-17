@@ -10,6 +10,7 @@ export const login = async (email: string, password: string, router: any, toast:
     email: email,
     password: password,
   }
+
   
   const { error } = await supabase.auth.signInWithPassword(data);
   
