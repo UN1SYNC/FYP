@@ -1,16 +1,24 @@
-import { configureStore } from "@reduxjs/toolkit";
-import authReducer from "./features/auth/authSlice";
-import rootReducer from "./rootReducer"; // Import combined reducers
+import { configureStore } from '@reduxjs/toolkit';
+import { persistStore, persistReducer } from 'redux-persist';
+import storage from 'redux-persist/lib/storage'; // LocalStorage
+import rootReducer from './rootReducer'; // Import your rootReducer (which combines reducers)
 
-
-export const makeStore = () => {
-  return configureStore({
-    reducer: rootReducer,
-  });
+// Redux Persist configuration
+const persistConfig = {
+  key: 'root', // Key for storing the state
+  storage, // Use localStorage (you can also use sessionStorage)
+  whitelist: ['auth'], // Only persist the 'auth' slice of the state (you can add other slices here)
 };
 
-// Infer the type of makeStore
-export type AppStore = ReturnType<typeof makeStore>;
-// Infer the `RootState` and `AppDispatch` types from the store itself
-export type RootState = ReturnType<AppStore["getState"]>;
-export type AppDispatch = AppStore["dispatch"];
+// Wrap the rootReducer with persistReducer
+const persistedReducer = persistReducer(persistConfig, rootReducer);
+
+// Create the store with persisted reducer
+const store = configureStore({
+  reducer: persistedReducer, // Apply persisted reducer
+});
+
+// Create the persistor
+const persistor = persistStore(store);
+
+export { store, persistor };
