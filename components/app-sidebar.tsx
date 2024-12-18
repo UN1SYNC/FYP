@@ -27,6 +27,7 @@ import {
 } from "@/components/ui/sidebar";
 
 import Image from "next/image";
+import Link from "next/link";
 import {useSelector} from "react-redux"
 
 
@@ -68,7 +69,7 @@ const data = {
   return (
     <Sidebar collapsible="icon" {...props}>
       <SidebarHeader>
-        <Image src="/logo1.svg" alt="Logo" width={40} height={40} />
+        <Link href="/dashboard"><Image src="/logo1.svg" alt="Logo" width={40} height={40} /></Link>
       </SidebarHeader>
       <SidebarContent>
         <NavMain items={data.navMain} />

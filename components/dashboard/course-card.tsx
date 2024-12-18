@@ -161,7 +161,8 @@ export function CourseCard({courseCardData}) {
   // RETURN TSX
   return (
     <>
-      <Link href="/dashboard">
+      <Link href={`/cms/${courseCardData.courseTitle.toLowerCase().replace(/\s+/g, "-")}`}
+      >
         <Card className="w-[350px] h-[160px] hover:shadow-md hover:shadow-black">
           <CardHeader>
             <CardTitle>{courseCardData.courseTitle}</CardTitle>
