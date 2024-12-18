@@ -32,7 +32,7 @@ import {
 import { logout } from "@/app/utils/auth"
 import { useRouter } from "next/navigation"
 import { useToast } from "@/hooks/use-toast"
-
+import {useDispatch} from "react-redux"
 export function NavUser({
   user,
 }: {
@@ -45,8 +45,9 @@ export function NavUser({
   const { isMobile } = useSidebar()
   const router = useRouter()
   const { toast } = useToast()
+  const dispatch = useDispatch()
   const handleLogout = () => {
-    logout(router, toast)
+    logout(router, toast, dispatch)
   }
 
   return (

@@ -159,6 +159,8 @@ const data = {
 };
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+
+  // RETURN TSX
   return (
     <Sidebar collapsible="icon" {...props}>
       <SidebarHeader>

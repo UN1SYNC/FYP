@@ -74,6 +74,8 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.redirect(new URL('/dashboard', request.url));
   }
 
+
+
   return supabaseResponse;
 }
 
