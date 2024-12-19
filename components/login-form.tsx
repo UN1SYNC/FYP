@@ -16,6 +16,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import Image from "next/image";
+import { useDispatch } from 'react-redux';
 
 export function LoginForm({
   className,
@@ -26,6 +27,7 @@ export function LoginForm({
   const [isLoggingIn, setIsLoggingIn] = useState<boolean>(false); // State to track login process
   const router = useRouter(); // Use useRouter to get the router
   const { toast } = useToast(); // Use useToast to get the toast
+  const dispatch = useDispatch();
 
   // HANDLE LOGIN SUBMIT FUNCTION
   const handleLoginButton = async () => {
@@ -41,7 +43,7 @@ export function LoginForm({
     }
     setIsLoggingIn(true); // Start spinning logo
     try {
-      await login(email, password, router, toast); // Perform login
+      await login(email, password, router, toast, dispatch); // Perform login
     } catch (error) {
       console.error(error);
     } finally {
