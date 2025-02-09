@@ -47,29 +47,41 @@ export function CourseCard({ courseCardData }) {
   //   fetchData();
   // }, []);
 
+  // Check if courseCardData is empty or not an array
+  if (!courseCardData || courseCardData.length === 0 || courseCardData === {}) {
+    return (
+      <div className="flex justify-center items-center h-40 text-gray-500">
+        No courses available at the moment.
+      </div>
+    );
+  }
+
   // RETURN TSX
   return (
     <div className="flex flex-wrap justify-between gap-y-4">
-      {Array(4).fill(courseCardData).map((courseCardData, index) => (
-        <Link
-          key={index}
-          href={`/cms/${courseCardData.courseTitle
-            .toLowerCase()
-            .replace(/\s+/g, "-")}`}
-        >
-          <Card className="w-[330px] h-[160px] hover:shadow-md hover:shadow-black bg-muted/80">
-            <CardHeader>
-              <CardTitle>{courseCardData.courseTitle}</CardTitle>
-              <CardDescription>{courseCardData.instructorName}</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <p>{courseCardData.courseDesc}</p>
-              <p>Attendance: 92.0% Fall 2024</p>
-            </CardContent>
-          </Card>
-        </Link>
-      ))}
+      {Array(4)
+        .fill(courseCardData)
+        .map((courseCardData, index) => (
+          <Link
+            key={index}
+            href={`/cms/${courseCardData.courseTitle
+              .toLowerCase()
+              .replace(/\s+/g, "-")}`}
+          >
+            <Card className="w-[330px] h-[160px] hover:shadow-md hover:shadow-black bg-muted/80">
+              <CardHeader>
+                <CardTitle>{courseCardData.courseTitle}</CardTitle>
+                <CardDescription>
+                  {courseCardData.instructorName}
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <p>{courseCardData.courseDesc}</p>
+                <p>Attendance: 92.0% Fall 2024</p>
+              </CardContent>
+            </Card>
+          </Link>
+        ))}
     </div>
   );
-  
 }

@@ -1,3 +1,5 @@
+// "use client";
+import { useState } from "react";
 import { AppSidebar } from "@/components/app-sidebar";
 import { CourseCard } from "@/components/dashboard/course-card";
 import {
@@ -37,7 +39,7 @@ export default async function Page() {
 
     if (studentError) {
       console.error("Error fetching student data:", studentError.message);
-      return;
+      return {};
     }
 
     if (!studentData || studentData.length === 0) {
@@ -100,7 +102,7 @@ export default async function Page() {
   };
 
   const courseCardData = await fetchCourseCardData();
-  // console.log("courseCardData: ", courseCardData)
+  // console.log("courseCardData: ", courseCardData);
 
   // RETURN TSX
   return (
