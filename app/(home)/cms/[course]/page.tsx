@@ -3,7 +3,7 @@ import React from "react";
 import { Button } from "@/components/ui/button";
 
 const CourseDashboard = ({params}) => {
-  console.log("params.course: ", params.course)
+  // console.log("params.course: ", params.course)
   return (
     <div className="p-6 bg-gray-100 min-h-screen">
       {/* Header Section */}

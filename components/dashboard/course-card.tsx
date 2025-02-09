@@ -1,87 +1,54 @@
 "use client";
-// import * as React from "react";
-import { useState, useEffect } from "react";
-import Link from "next/link";
 
-import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { createClient } from "@/utils/supabase/client";
+import { useState } from "react";
 import { useSelector } from "react-redux";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { RootState } from "../store"; // Adjust the path to your store file
-
-// import {
-//   Select,
-//   SelectContent,
-//   SelectItem,
-//   SelectTrigger,
-//   SelectValue,
-// } from "@/components/ui/select"
+import Loading from "@/components/ui/loading"; // Import the Loading component
 
 export function CourseCard({ courseCardData }) {
-  const [data, setData] = useState([]);
-  const [courseId, setCourseId] = useState<string | null>(null);
-  const supabase = createClient();
-  const user = useSelector((state: RootState) => state.auth.user); // Access the user from auth slice
-  // console.log("user insdie course card: ", user);
-  // GETTIG STUDENT FROM BACKEND
-  // useEffect(() => {
-  //   const fetchData = async () => {
-  //       const { data, error } = await supabase.from("students").select("*");
-  //       if (error) {
-  //         console.error("Error fetching data:", error.message);
-  //       } else {
-  //         setData(data);
-  //         console.log("Fetched data:", data);
-  //       }
-  //   };
+  const [loading, setLoading] = useState(false);
+  const user = useSelector((state: RootState) => state.auth.user); // Access Redux user state
+  const router = useRouter();
 
-  //   fetchData();
-  // }, []);
+  const handleCourseClick = (courseSlug: string) => {
+    setLoading(true);
+    router.push(`/cms/${courseSlug}`);
+  };
 
-  // Check if courseCardData is empty or not an array
-  if (!courseCardData || courseCardData.length === 0 || courseCardData === {}) {
-    return (
-      <div className="flex justify-center items-center h-40 text-gray-500">
-        No courses available at the moment.
-      </div>
-    );
-  }
-
-  // RETURN TSX
   return (
     <div className="flex flex-wrap justify-between gap-y-4">
-      {Array(4)
-        .fill(courseCardData)
-        .map((courseCardData, index) => (
-          <Link
-            key={index}
-            href={`/cms/${courseCardData.courseTitle
-              .toLowerCase()
-              .replace(/\s+/g, "-")}`}
-          >
-            <Card className="w-[330px] h-[160px] hover:shadow-md hover:shadow-black bg-muted/80">
+      {loading ? (
+        <div className="w-full flex justify-center">
+          <Loading />
+        </div>
+      ) : (
+        courseCardData.map((course, index) => {
+          const courseSlug = course?.title
+            ? course.title.toLowerCase().replace(/\s+/g, "-")
+            : "unknown-course";
+
+          return (
+            <Card
+              key={index}
+              className="w-[330px] h-[160px] hover:shadow-md hover:shadow-black bg-muted/80 cursor-pointer"
+              onClick={() => handleCourseClick(courseSlug)}
+            >
               <CardHeader>
-                <CardTitle>{courseCardData.courseTitle}</CardTitle>
+                <CardTitle>{course.title || "Untitled Course"}</CardTitle>
                 <CardDescription>
-                  {courseCardData.instructorName}
+                  {course.faculty_id ? `Faculty ID: ${course.faculty_id}` : "Unknown Faculty"}
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <p>{courseCardData.courseDesc}</p>
-                <p>Attendance: 92.0% Fall 2024</p>
+                <p>{course.description || "No description available."}</p>
               </CardContent>
             </Card>
-          </Link>
-        ))}
+          );
+        })
+      )}
     </div>
   );
 }
