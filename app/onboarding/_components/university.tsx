@@ -17,7 +17,7 @@ const UniversityConfiguration = () => {
   } = useForm();
 
   const onSubmit = (data: any) => {
-    console.log(data); // Replace with API call or state update
+    console.log(data);
     router.push("/onboarding?step=select&type=systems");
   };
 

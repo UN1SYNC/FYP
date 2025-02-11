@@ -51,7 +51,8 @@ const SystemsSelection = () => {
         return;
       }
       console.log("Selected Systems:", selectedSystems); // Replace with API call or state update
-      router.push("/onboarding/systems-configuration");
+      localStorage.setItem("selectedSystems", JSON.stringify(selectedSystems));
+      router.push("/onboarding?step=configure&type=systems");
     };
   
     return (

@@ -5,6 +5,9 @@ import Welcome from "./welcome";
 import { AnimatePresence } from "framer-motion";
 import UniversityConfiguration from "./university";
 import SystemsSelection from "./systems";
+import SystemsConfiguration from "./system-config";
+import CMSModules from "./modules";
+import CMSModuleConfigure from "./module-config";
 
 
 type OnboardingProps = {
@@ -20,6 +23,9 @@ const Onboarding = ({userId}: OnboardingProps) => {
       {!step && <Welcome />}
       {step === "configure" && type === "university" && <UniversityConfiguration />}
       {step === "select" && type === "systems" && <SystemsSelection />}
+      {step === "configure" && type === "systems" && <SystemsConfiguration />}
+      {step === "select" && type === "modules" && <CMSModules />}
+      {step === "configure" && type === "modules" && <CMSModuleConfigure />}
     </AnimatePresence>
   )
 }
