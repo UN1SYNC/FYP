@@ -4,11 +4,12 @@ import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { supabase } from "../../../utils/supabase/supabase";
+import { InfoIcon } from "lucide-react";
 
 const modulesData = [
-  { key: "course_material", name: "Course Material", url: "/course-material" },
+  { key: "course_material", name: "Course Content", url: "/content" },
   { key: "attendance", name: "Attendance", url: "/attendence" },
-  { key: "grading", name: "Grade Book", url: "/grade-book" },
+  { key: "grading", name: "Grade Book", url: "/grades" },
   { key: "submission", name: "Submission", url: "/submission" },
   { key: "project_management", name: "Project Management", url: "/project-management" },
   { key: "notification_system", name: "Notifications", url: "/notifications" },
@@ -46,6 +47,9 @@ const Topbar = () => {
       <div className="container">
         <nav className="flex">
           <div className="flex items-center flex-wrap gap-2">
+            <Button className="bg-black/90 text-white hover:bg-black/60">
+              <Link href={`${currentUrl}`}><InfoIcon size={24} /></Link>
+            </Button>
             {modulesData
               .filter((module) => modules[module.key]) // Show only enabled modules
               .map((module) => (
