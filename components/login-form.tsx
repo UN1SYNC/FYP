@@ -52,7 +52,7 @@ export function LoginForm({
 
   // RETURN TSX
   return (
-    <div className={cn("flex flex-col gap-6", className)} {...props}>
+    <div className={cn("flex flex-col gap-6", className)}>
       <Card className="pb-8">
         <CardHeader>
           <CardTitle className="text-2xl">
