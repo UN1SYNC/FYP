@@ -51,11 +51,21 @@ const SystemsConfiguration = () => {
 
   const handleConfigure = (systemId: string) => {
     router.push(`/onboarding?step=select&type=modules`);
-    // setConfigurationStatus((prevStatus) => ({
-    //   ...prevStatus,
-    //   [systemId]: true, // Mark the system as "Configured"
-    // }));
+    setConfigurationStatus((prevStatus) => ({
+      ...prevStatus,
+      [systemId]: true, // Mark the system as "Configured"
+    }));
+    localStorage.setItem("configuredSystems", JSON.stringify([...selectedSystems, systemId]));
   };
+
+  useEffect(() => {
+    const storedConfiguredSystems = JSON.parse(localStorage.getItem("configuredSystems") || "[]");
+    const initialStatus = storedConfiguredSystems.reduce((acc: Record<string, boolean>, systemId: string) => {
+      acc[systemId] = true; // All start as "Configured"
+      return acc;
+    }, {});
+    setConfigurationStatus(initialStatus);
+  }, []);
 
   const handleContinue = () => {
     const allConfigured = Object.values(configurationStatus).every((status) => status);
@@ -125,6 +135,7 @@ const SystemsConfiguration = () => {
         animate={{ opacity: 1 }}
         transition={{ delay: 0.4 }}
       >
+        
         <Button onClick={handleContinue} className="px-8 py-3">
           Continue
         </Button>
