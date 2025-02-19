@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - dev  # Triggers when dev is updated
+  workflow_dispatch:
 
 jobs:
   trigger:
