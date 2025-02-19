@@ -1,4 +1,4 @@
-"use client";
+import React from "react";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useRouter } from "next/navigation"; // Import useRouter
 import { useToast } from "@/hooks/use-toast";
-import { login } from "@/app/utils/auth";
+import { signup } from "@/app/utils/auth";
 import {
   Card,
   CardContent,
@@ -15,21 +15,22 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import Image from "next/image";
-import { useDispatch } from 'react-redux';
+import { useDispatch } from "react-redux";
 
-export function LoginForm({
+const SignUpForm = ({
   className,
   ...props
-}: React.ComponentPropsWithoutRef<"form">) {
-  const [email, setEmail] = useState<string | null>(null);
-  const [password, setPassword] = useState<string | null>(null);
-  const [isLoggingIn, setIsLoggingIn] = useState<boolean>(false); // State to track login process
-  const router = useRouter(); // Use useRouter to get the router
-  const { toast } = useToast(); // Use useToast to get the toast
-  const dispatch = useDispatch();
+}: React.ComponentPropsWithoutRef<"form">) => {
 
-  // HANDLE LOGIN SUBMIT FUNCTION
-  const handleLoginButton = async () => {
+    const [email, setEmail] = useState<string | null>(null);
+    const [password, setPassword] = useState<string | null>(null);
+    const [isLoggingIn, setIsLoggingIn] = useState<boolean>(false); // State to track login process
+    const router = useRouter(); // Use useRouter to get the router
+    const { toast } = useToast(); // Use useToast to get the toast
+    const dispatch = useDispatch();
+
+      // HANDLE LOGIN SUBMIT FUNCTION
+  const handleSignUpButton = async () => {
     // Check if email or password is empty
     if (!email || !password) {
       toast({
@@ -42,7 +43,7 @@ export function LoginForm({
     }
     setIsLoggingIn(true); // Start spinning logo
     try {
-      await login(email, password, router, toast, dispatch); // Perform login
+      await signup(email, password, router, toast, dispatch); // Perform login
     } catch (error) {
       console.error(error);
     } finally {
@@ -50,9 +51,9 @@ export function LoginForm({
     }
   };
 
-  // RETURN TSX
+  // RETURN TSX  
   return (
-    <div className={cn("flex flex-col gap-6", className)}>
+    <div className={cn("flex flex-col gap-6", className)} {...props}>
       <Card className="pb-8">
         <CardHeader>
           <CardTitle className="text-2xl">
@@ -72,7 +73,7 @@ export function LoginForm({
             </div>
           </CardTitle>
           <CardDescription>
-            Enter your email below to login to your account
+            Enter your email and password to create an account
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -106,13 +107,15 @@ export function LoginForm({
                   required
                 />
               </div>
-              <Button onClick={handleLoginButton} className="w-full">
-                Login
-              </Button>
+              <Button onClick={handleSignUpButton} className="w-full">
+              SignUp
+            </Button>
             </div>
           </div>
         </CardContent>
       </Card>
     </div>
   );
-}
+};
+
+export default SignUpForm;
