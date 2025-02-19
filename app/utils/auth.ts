@@ -75,20 +75,6 @@ export const login = async (
   return;
 };
 
-  // Dispatch user details to Redux store if login is successful
-  if (data?.user) {
-    dispatch(loginAction({ id: data.user.id, email: data.user.email }));
-    toast({
-      title: "Login Successful",
-      description: "Redirecting to dashboard",
-      className: "bg-green-500 border-green-500 text-white",
-      duration: 1000,
-    });
-
-    router.push("/dashboard");
-  }
-};
-
 // LOGOUT BUTTON FUNCTIONALITY
 export const logout = async (router: any, toast: any, dispatch: any) => {
   const supabase = createClient();
