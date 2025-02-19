@@ -64,3 +64,40 @@ export const logout = async (router: any, toast: any, dispatch: any) => {
 
   router.push("/"); // Redirect to the homepage
 };
+
+// SIGNUP BUTTON FUNCTIONALITY
+export const signup = async (
+  email: string,
+  password: string,
+  router: any,
+  toast: any
+) => {
+  const supabase = createClient();
+
+  const credentialsData = {
+    email: email,
+    password: password,
+  };
+
+  const { data, error } = await supabase.auth.signUp(credentialsData);
+
+  if (error) {
+    toast({
+      title: "Signup Failed",
+      description: error.message,
+      className: "bg-red-500 border-red-500 text-white",
+      duration: 1000,
+    });
+    return;
+  }
+
+  // Show success message without auto-login
+  toast({
+    title: "Signup Successful",
+    description: "Please check your email to verify your account.",
+    className: "bg-green-500 border-green-500 text-white",
+    duration: 1000,
+  });
+
+  // router.push("/login");
+};
