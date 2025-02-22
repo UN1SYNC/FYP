@@ -5,9 +5,17 @@ import { CourseCard } from "@/components/dashboard/course-card";
 import { createClient } from "@/utils/supabase/client";
 import Loading from "@/components/ui/loading"; // Import the Loading component
 
+type User = {
+  id: string;
+  email?: string;
+  user_metadata?: {
+    full_name?: string;
+  };
+};
+
 const CoursesView = () => {
-  const [courseCardData, setCourseCardData] = useState([]);
-  const [user, setUser] = useState(null);
+  const [courseCardData, setCourseCardData] = useState<any[]>([]); // Track course card data
+  const [user, setUser] = useState<User | null>(null); // Track user state
   const [loading, setLoading] = useState(true); // Track loading state
   const supabase = createClient();
 
@@ -67,7 +75,6 @@ const CoursesView = () => {
           "course_id",
           enrollmentsData.map((e) => e.course_id)
         );
-
       setCourseCardData(courseData || []);
       setLoading(false);
     };

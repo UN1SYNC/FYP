@@ -5,10 +5,10 @@ import { useSelector } from "react-redux";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { RootState } from "../store"; // Adjust the path to your store file
 import Loading from "@/components/ui/loading"; // Import the Loading component
+import { RootState } from "@/lib/store";
 
-export function CourseCard({ courseCardData }) {
+export function CourseCard({ courseCardData } : any) {
   const [loading, setLoading] = useState(false);
   const user = useSelector((state: RootState) => state.auth.user); // Access Redux user state
   const router = useRouter();
@@ -25,10 +25,8 @@ export function CourseCard({ courseCardData }) {
           <Loading />
         </div>
       ) : (
-        courseCardData.map((course, index) => {
-          const courseSlug = course?.title
-            ? course.title.toLowerCase().replace(/\s+/g, "-")
-            : "unknown-course";
+        courseCardData.map((course:any , index:any) => {
+          const courseSlug = course.course_id
 
           return (
             <Card
