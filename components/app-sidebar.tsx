@@ -62,6 +62,26 @@ const data = {
         },
       ],
     },
+    {
+      title: "Admin",
+      url: "#",
+      icon: SquareTerminal,
+      isActive: true,
+      items: [
+        {
+          title: "Student Register",
+          url: "/admin/student-register",
+        },
+        {
+          title: "Course Register",
+          url: "#",
+        },
+        {
+          title: "Professor Register",
+          url: "#",
+        },
+      ],
+    },
   ]
 };
 
