@@ -7,7 +7,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Card } from "@/components/ui/card";
 import { calculateTimeRemaining } from "@/lib/utils/date";
 import { FileUpload } from "./FileUpload";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 
 interface AddSubmissionProps {
   submissionId: string;
@@ -51,6 +51,8 @@ export const AddSubmission = ({ submissionId, courseId }: AddSubmissionProps) =>
     toast({
       title: "File selected",
       description: `${file.name} has been selected for upload.`,
+      className:"bg-yellow-500 border-yellow-500 text-white",
+      duration: 1000
     });
   };
 
@@ -74,6 +76,8 @@ export const AddSubmission = ({ submissionId, courseId }: AddSubmissionProps) =>
       toast({
         title: "Success",
         description: "Your submission has been uploaded successfully.",
+        className:"bg-green-500 border-green-500 text-white",
+        duration: 1000
       });
       setIsModalOpen(false);
       setSelectedFile(null);
