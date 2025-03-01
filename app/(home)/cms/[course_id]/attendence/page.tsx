@@ -15,6 +15,7 @@ const AttendanceDetails = () => {
 
   useEffect(() => {
     const fetchAttendance = async () => {
+      console.log("User: ",user);
       if (!user) return;
 
       try {
@@ -24,6 +25,8 @@ const AttendanceDetails = () => {
           .select("student_id")
           .eq("user_id", user.id)
           .single();
+          console.log("StudentData: ",studentData);
+
 
         if (studentError || !studentData) {
           console.error("Error fetching student_id:", studentError);

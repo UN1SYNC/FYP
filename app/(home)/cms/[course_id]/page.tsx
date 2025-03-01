@@ -29,7 +29,7 @@ const CourseDashboard = async ({ params }:any ) => {
   }
 
   const { data: courseData, error } = await supabase
-  .from('courses')
+  .from('course_instructor')
   .select(`
     *,
     instructors:instructors (
@@ -45,7 +45,7 @@ const CourseDashboard = async ({ params }:any ) => {
 
   const instructorName = courseData[0].instructors.user.name;
 
-  console.log(courseData);
+  console.log("CourseData: ",courseData);
 
   return (
     <div className="p-6 bg-gray-100 min-h-screen">
