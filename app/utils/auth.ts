@@ -30,6 +30,12 @@ export const login = async (
 
   // Check if the user role is admin
   const userData = await supabase.auth.getUser();
+  console.log("userData1:", userData);
+  dispatch(loginAction({
+    data: {
+      user: userData?.data?.user,
+    },
+  }));
   const userId = userData?.data?.user?.id;
   console.log(typeof userId);
   if (userData?.data?.user?.role === "authenticated") {
