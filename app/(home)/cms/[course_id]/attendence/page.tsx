@@ -2,8 +2,9 @@
 import { createClient } from "@/utils/supabase/client";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { useSelector } from "react-redux";
-import { RootState } from "@/lib/store"; // Adjust path as needed
+import { RootState } from "@/lib/store";
 import { useEffect, useState } from "react";
+import Loading from "@/components/ui/loading";
 
 const AttendanceDetails = () => {
   const [selectedTab, setSelectedTab] = useState("lecture");
@@ -12,6 +13,10 @@ const AttendanceDetails = () => {
   const [loading, setLoading] = useState(true);
   const supabase = createClient();
   const user = useSelector((state: RootState) => state.auth.user);
+  const course_id = window.location.pathname.split("/")[2];
+  const [course, setCourse] = useState<any>();
+  const [presentCount, setPresentCount] = useState(0);
+  const [absentCount, setAbsentCount] = useState(0);
 
   useEffect(() => {
     const fetchAttendance = async () => {
@@ -40,7 +45,8 @@ const AttendanceDetails = () => {
         const { data: attendance, error: attendanceError } = await supabase
           .from("attendances")
           .select("*")
-          .eq("student_id", studentData.student_id);
+          .eq("student_id", studentData.student_id)
+          .eq("course_id", course_id);
 
         if (attendanceError) {
           console.error("Error fetching attendance:", attendanceError);
@@ -49,6 +55,8 @@ const AttendanceDetails = () => {
         }
 
         setAttendanceData(attendance || []);
+        setPresentCount(attendance.filter((row) => row.status === "present").length);
+        setAbsentCount(attendance.filter((row) => row.status === "absent").length);
       } catch (error) {
         console.error("Unexpected error:", error);
       } finally {
@@ -60,10 +68,38 @@ const AttendanceDetails = () => {
   }, [user]);
 
   useEffect(() => {
+    const fetchCourse = async () => {
+      try {
+        const { data: courseData, error: courseError } = await supabase
+          .from("courses")
+          .select("*")
+          .eq("course_id", course_id)
+          .single();
+
+        if (courseError || !courseData) {
+          console.error("Error fetching course:", courseError);
+          return;
+        }
+
+        console.log("Course data:", courseData);
+
+        setCourse(courseData);
+      } catch (error) {
+        console.error("Unexpected error:", error);
+      }
+    };
+  
+    fetchCourse();
+  }
+  , [course_id]);
+
+  useEffect(() => {
     console.log("Updated attendanceData:", attendanceData);
   }, [attendanceData]);
 
-  if (loading) return <p>Loading attendance...</p>;
+  if (loading) {
+      return <Loading />; // Show loading component while data is being fetched
+  }
 
   return (
     <div className="p-6 bg-white rounded-lg shadow-md">
@@ -97,7 +133,7 @@ const AttendanceDetails = () => {
           <div className="grid grid-cols-2 gap-4 text-sm mb-6">
             <div>
               <p className="font-semibold">Course:</p>
-              <p>Network Security</p>
+              <p>{course?.title}</p>
             </div>
             <div>
               <p className="font-semibold">Academic Term:</p>
@@ -105,19 +141,19 @@ const AttendanceDetails = () => {
             </div>
             <div>
               <p className="font-semibold">Course Code:</p>
-              <p>CS-381-Fall-24-SEECS/BSE/2021F-A-lecture</p>
+              <p>{course?.course_code}</p>
             </div>
             <div>
               <p className="font-semibold">Attendance Percentage:</p>
-              <p>88.57%</p>
+              <p>{attendanceData.length>0 ? presentCount*100/attendanceData.length : 0} %</p>
             </div>
             <div>
               <p className="font-semibold">Number of classes Conducted:</p>
-              <p>35</p>
+              <p>{attendanceData.length}</p>
             </div>
             <div>
               <p className="font-semibold">Number of classes Attended:</p>
-              <p>31</p>
+              <p>{presentCount}</p>
             </div>
           </div>
 

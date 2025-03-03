@@ -37,8 +37,6 @@ export const login = async (
     },
   }));
   const userId = userData?.data?.user?.id;
-  console.log(typeof userId);
-  console.log("user in auth.ts",userData);
   if (userData?.data?.user?.role === "authenticated") {
     const { data, error } = await supabase
       .from("admins")
@@ -78,6 +76,11 @@ export const login = async (
     duration: 1000
   });
   
+  // Dispatch login action to store user data in Redux
+  dispatch(loginAction({
+    email: email || "",
+    id: userId || "",
+  }));
   router.push("/dashboard");
   return;
 };

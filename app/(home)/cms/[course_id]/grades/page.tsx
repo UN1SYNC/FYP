@@ -1,39 +1,100 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/components/ui/accordion";
+import { createClient } from "@/utils/supabase/client";
+import { useSelector } from "react-redux";
+import { RootState } from "@/lib/store";
 
 const Gradebook = () => {
+  const [loading, setLoading] = useState(true);
+  const supabase = createClient();
+  const user = useSelector((state: RootState) => state.auth.user);
+  const course_id = window.location.pathname.split("/")[2];
   const [isActive, setIsActive] = useState(true); // Toggle for Active/Previous Course
   const [selectedTab, setSelectedTab] = useState("course"); // Tabs for Course/Lab
+  const [courseData, setCourseData] = useState<any>({});
 
-  // Dummy Grade Data (Example)
-  const gradesData = {
-    assignments: [
-      { name: "Assignment 1", total: 10, obtained: 9, average: 7, percentage: 90 },
-      { name: "Assignment 2", total: 10, obtained: 8, average: 7.5, percentage: 80 },
-    ],
-    quizzes: [
-      { name: "Quiz 1", total: 20, obtained: 18, average: 15, percentage: 90 },
-      { name: "Quiz 2", total: 20, obtained: 16, average: 14, percentage: 80 },
-    ],
-    midterm: [{ name: "Midterm Exam", total: 50, obtained: 42, average: 38, percentage: 84 }],
-    final: [{ name: "Final Exam", total: 100, obtained: 85, average: 75, percentage: 85 }],
-    project: [{ name: "Final Project", total: 50, obtained: 45, average: 40, percentage: 90 }],
-  };
+  useEffect(() => {
+    const fetchCourse = async () => {
+      if (!user) return;
 
-  const labGradesData = {
-    labs: [
-        { name: "Lab 1", total: 10, obtained: 9, average: 7, percentage: 90 },
-        { name: "Lab 2", total: 10, obtained: 8, average: 7.5, percentage: 80 },
-        ],
-    quizzes: [
-        { name: "Quiz 1", total: 20, obtained: 18, average: 15, percentage: 90 },
-        { name: "Quiz 2", total: 20, obtained: 16, average: 14, percentage: 80 },
-        ],
-    final: [{ name: "Final Exam", total: 100, obtained: 85, average: 75, percentage: 85 }],
-  };
+      try {
+        // Fetch student_id based on user_id
+        const { data: studentData, error: studentError } = await supabase
+          .from("students")
+          .select("student_id")
+          .eq("user_id", user.id)
+          .single();
+
+        if (studentError || !studentData) {
+          console.error("Error fetching student_id:", studentError);
+          setLoading(false);
+          return;
+        }
+
+        // Fetch course data
+        const { data: assessments, error: courseError } = await supabase
+          .from("assessment")
+          .select("*")
+          .eq("course_id", course_id)
+
+        if (courseError || !assessments) {
+          console.error("Error fetching course data:", courseError);
+          setLoading(false);
+          return;
+        }
+
+        // Fetch grades data
+        const { data: gradesData, error: gradesError } = await supabase
+          .from("assessment_grades")
+          .select("*")
+          .in("assessment_id", assessments.map(assessment => assessment.assessment_id));
+
+        if (gradesError || !gradesData) {
+          console.error("Error fetching grades data:", gradesError);
+          setLoading(false);
+          return;
+        }
+
+        const data = assessments.reduce((acc: any, assessment: any) => {
+          const grades = gradesData.filter((grade: any) => grade.assessment_id === assessment.assessment_id && grade.student_id === studentData.student_id);
+          const total = grades.reduce((acc: number, grade: any) => acc + grade.total_grades, 0);
+          const obtained = grades.reduce((acc: number, grade: any) => acc + grade.grade, 0);
+          const percentage = (obtained / total) * 100;
+
+          if (!acc[assessment.type]) {
+            acc[assessment.type] = [];
+          }
+
+          acc[assessment.type].push({
+            name: assessment.title,
+            total,
+            obtained,
+            average: total / grades.length,
+            percentage,
+          });
+
+          return acc;
+        }, {}); 
+
+        console.log(data);
+
+        setCourseData(data);
+
+        // Fetch lab data
+
+      } catch (error) {
+        console.error("Unexpected error:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchCourse();
+  }, [user]);
+    
 
   return (
     <div className="p-6 bg-white rounded-lg shadow-md">
@@ -66,7 +127,7 @@ const Gradebook = () => {
         {/* Course Tab Content */}
         <TabsContent value="course" className="mt-4">
           <Accordion type="multiple" className="w-full">
-            {Object.entries(gradesData).map(([category, items]) => (
+            {Object.entries(courseData).map(([category, items]) => (
               <AccordionItem key={category} value={category} className="border-b">
                 <AccordionTrigger className="p-4 bg-gray-100 rounded-md hover:bg-gray-200 transition">
                   {category.charAt(0).toUpperCase() + category.slice(1)}
@@ -83,7 +144,7 @@ const Gradebook = () => {
                       </tr>
                     </thead>
                     <tbody>
-                      {items.map((item, index) => (
+                      {(items as any[]).map((item:any, index:any) => (
                         <tr key={index} className="odd:bg-white even:bg-gray-50">
                           <td className="px-4 py-2 border">{item.name}</td>
                           <td className="px-4 py-2 border text-center">{item.total}</td>
@@ -102,7 +163,7 @@ const Gradebook = () => {
 
         {/* Lab Tab Content (Placeholder) */}
         <TabsContent value="lab" className="mt-4">
-            <Accordion type="multiple" className="w-full">
+            {/* <Accordion type="multiple" className="w-full">
                 {Object.entries(labGradesData).map(([category, items]) => (
                 <AccordionItem key={category} value={category} className="border-b">
                     <AccordionTrigger className="p-4 bg-gray-100 rounded-md hover:bg-gray-200 transition">
@@ -134,7 +195,7 @@ const Gradebook = () => {
                     </AccordionContent>
                 </AccordionItem>
                 ))}
-            </Accordion>
+            </Accordion> */}
         </TabsContent>
       </Tabs>
     </div>
