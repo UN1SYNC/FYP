@@ -38,6 +38,7 @@ export const login = async (
   }));
   const userId = userData?.data?.user?.id;
   console.log(typeof userId);
+  console.log("user in auth.ts",userData);
   if (userData?.data?.user?.role === "authenticated") {
     const { data, error } = await supabase
       .from("admins")

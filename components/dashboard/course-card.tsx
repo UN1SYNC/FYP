@@ -14,7 +14,7 @@ export function CourseCard({ courseCardData } : any) {
   const router = useRouter();
 
   const handleCourseClick = (courseSlug: string) => {
-    setLoading(true);
+    setLoading(true); 
     router.push(`/cms/${courseSlug}`);
   };
 
