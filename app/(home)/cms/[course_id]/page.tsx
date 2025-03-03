@@ -29,7 +29,7 @@ const CourseDashboard = async ({ params }:any ) => {
   }
 
   const { data: courseData, error } = await supabase
-  .from('courses')
+  .from('course_instructor')
   .select(`
     *,
     instructors:instructors (

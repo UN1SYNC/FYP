@@ -29,16 +29,18 @@ import {
 import Image from "next/image";
 import Link from "next/link";
 import {useSelector} from "react-redux"
+import { RootState } from "@/lib/store";
 
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 
   const userData = useSelector((state: RootState)=>state.auth.user)
+  console.log("userData:", userData)
 // This is sample data.
 const data = {
   user: {
-    name: userData?.name,
-    email: userData?.email,
+    name: userData?.name || 'User',
+    email: userData?.email || '',
     avatar: "./logo1.svg",
   },
   navMain: [
