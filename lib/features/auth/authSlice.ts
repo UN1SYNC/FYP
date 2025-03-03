@@ -6,6 +6,7 @@ interface AuthState {
   user: {
     id: string;
     email: string;
+    name: string;
   } | null; // User data will be null when logged out
 }
 
@@ -20,10 +21,22 @@ const authSlice = createSlice({
   initialState,
   reducers: {
     // Login action to store user information
-    loginAction(state, action: PayloadAction<{ id: string; email: string }>) {
-      state.user = action.payload; // Store user details in the state
-      console.log('User logged in:', action.payload);
-    },
+    loginAction(state, action: PayloadAction<{ data: { user: any } }>) {
+      console.log("action.payload.data:", action.payload.data);
+      const { user } = action.payload.data;
+    
+      state.user = {
+        id: user.id,
+        email: user.email,
+        role: user.user_metadata?.role || "unknown",
+        name: user.user_metadata?.name || "Anonymous",
+        lastSignIn: user.last_sign_in_at,
+        createdAt: user.created_at,
+      };
+    
+      console.log("User logged in:", state.user);
+    }
+    ,
     // Logout action to clear user information
     logoutAction(state) {
       

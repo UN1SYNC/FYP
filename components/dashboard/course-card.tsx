@@ -37,7 +37,8 @@ export function CourseCard({ courseCardData } : any) {
               <CardHeader>
                 <CardTitle>{course.title || "Untitled Course"}</CardTitle>
                 <CardDescription>
-                  {course.faculty_id ? `Faculty ID: ${course.faculty_id}` : "Unknown Faculty"}
+                  {course.faculty_id ? `Faculty ID: ${course.faculty_id}` : "Unknown Faculty"}  
+                  {/* faculty_id need to be changed to instructor_id and get from course_instructor table */}
                 </CardDescription>
               </CardHeader>
               <CardContent>

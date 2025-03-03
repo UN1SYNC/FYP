@@ -2,7 +2,7 @@
 import { createClient } from "@/utils/supabase/client";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { useSelector } from "react-redux";
-import { RootState } from "../lib/store"; // Adjust path as needed
+import { RootState } from "@/lib/store"; // Adjust path as needed
 import { useEffect, useState } from "react";
 
 const AttendanceDetails = () => {
