@@ -18,6 +18,8 @@ export const login = async (
  
   const { data, error } = await supabase.auth.signInWithPassword(credentialsData);
 
+  // console.log("00data",data)
+
   if (error) {
     toast({
       title: "Unable to Signin",
@@ -29,15 +31,31 @@ export const login = async (
   }
 
   // Check if the user role is admin
-  const userData = await supabase.auth.getUser();
-  console.log("userData1:", userData);
+  const { data:user_details, error:details_error } = await supabase.rpc('get_user_details', {
+    user_id_param: data?.user?.id || ''
+  })
+  console.log("user_details",user_details)
+  console.log("error:", details_error);
+  
+  if (details_error) {
+    toast({
+      title: "Error",
+      description: "Failed to fetch user data",
+      className: "bg-red-500 border-red-500 text-white",
+      duration: 1000,
+    });
+    return;
+  }
+
+  user_details.lastSignIn = data?.user?.last_sign_in_at
+
   dispatch(loginAction({
     data: {
-      user: userData?.data?.user,
+      user: user_details,
     },
   }));
-  const userId = userData?.data?.user?.id;
-  if (userData?.data?.user?.role === "authenticated") {
+  const userId = user_details?.data?.user?.id;
+  if (data?.user?.role === "authenticated") {
     const { data, error } = await supabase
       .from("admins")
       .select("*")
@@ -77,10 +95,10 @@ export const login = async (
   });
   
   // Dispatch login action to store user data in Redux
-  dispatch(loginAction({
-    email: email || "",
-    id: userId || "",
-  }));
+  // dispatch(loginAction({
+  //   email: email || "",
+  //   id: userId || "",
+  // }));
   router.push("/dashboard");
   return;
 };
