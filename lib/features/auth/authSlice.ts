@@ -28,7 +28,8 @@ const authSlice = createSlice({
       state.user = {
         id: user.id,
         email: user.email,
-        role: user.user_metadata?.role || "unknown",
+        // role: user.user_metadata?.role || "unknown",
+        role: "instructor",
         name: user.user_metadata?.name || "Anonymous",
         lastSignIn: user.last_sign_in_at,
         createdAt: user.created_at,
