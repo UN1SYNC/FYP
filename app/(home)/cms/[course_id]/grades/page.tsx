@@ -2,10 +2,11 @@
 
 import { useEffect, useState } from "react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/components/ui/accordion";
 import { createClient } from "@/utils/supabase/client";
 import { useSelector } from "react-redux";
 import { RootState } from "@/lib/store";
+import { CourseGrades } from "@/components/cms/grades/CourseGrades";
+import { LabGrades } from "@/components/cms/grades/LabGrades";
 
 const Gradebook = () => {
   const [loading, setLoading] = useState(true);
@@ -126,76 +127,12 @@ const Gradebook = () => {
 
         {/* Course Tab Content */}
         <TabsContent value="course" className="mt-4">
-          <Accordion type="multiple" className="w-full">
-            {Object.entries(courseData).map(([category, items]) => (
-              <AccordionItem key={category} value={category} className="border-b">
-                <AccordionTrigger className="p-4 bg-gray-100 rounded-md hover:bg-gray-200 transition">
-                  {category.charAt(0).toUpperCase() + category.slice(1)}
-                </AccordionTrigger>
-                <AccordionContent className="p-4">
-                  <table className="w-full border border-gray-300">
-                    <thead className="bg-gray-100">
-                      <tr>
-                        <th className="px-4 py-2 border">Name</th>
-                        <th className="px-4 py-2 border">Total Marks</th>
-                        <th className="px-4 py-2 border">Obtained Marks</th>
-                        <th className="px-4 py-2 border">Average</th>
-                        <th className="px-4 py-2 border">Percentage</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {(items as any[]).map((item:any, index:any) => (
-                        <tr key={index} className="odd:bg-white even:bg-gray-50">
-                          <td className="px-4 py-2 border">{item.name}</td>
-                          <td className="px-4 py-2 border text-center">{item.total}</td>
-                          <td className="px-4 py-2 border text-center">{item.obtained}</td>
-                          <td className="px-4 py-2 border text-center">{item.average}</td>
-                          <td className="px-4 py-2 border text-center">{item.percentage}%</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </AccordionContent>
-              </AccordionItem>
-            ))}
-          </Accordion>
+          <CourseGrades courseData={courseData} />
         </TabsContent>
 
         {/* Lab Tab Content (Placeholder) */}
         <TabsContent value="lab" className="mt-4">
-            {/* <Accordion type="multiple" className="w-full">
-                {Object.entries(labGradesData).map(([category, items]) => (
-                <AccordionItem key={category} value={category} className="border-b">
-                    <AccordionTrigger className="p-4 bg-gray-100 rounded-md hover:bg-gray-200 transition">
-                    {category.charAt(0).toUpperCase() + category.slice(1)}
-                    </AccordionTrigger>
-                    <AccordionContent className="p-4">
-                    <table className="w-full border border-gray-300">
-                        <thead className="bg-gray-100">
-                        <tr>
-                            <th className="px-4 py-2 border">Name</th>
-                            <th className="px-4 py-2 border">Total Marks</th>
-                            <th className="px-4 py-2 border">Obtained Marks</th>
-                            <th className="px-4 py-2 border">Average</th>
-                            <th className="px-4 py-2 border">Percentage</th>
-                        </tr>
-                        </thead>
-                        <tbody>
-                        {items.map((item, index) => (
-                            <tr key={index} className="odd:bg-white even:bg-gray-50">
-                            <td className="px-4 py-2 border">{item.name}</td>
-                            <td className="px-4 py-2 border text-center">{item.total}</td>
-                            <td className="px-4 py-2 border text-center">{item.obtained}</td>
-                            <td className="px-4 py-2 border text-center">{item.average}</td>
-                            <td className="px-4 py-2 border text-center">{item.percentage}%</td>
-                            </tr>
-                        ))}
-                        </tbody>
-                    </table>
-                    </AccordionContent>
-                </AccordionItem>
-                ))}
-            </Accordion> */}
+          <LabGrades />
         </TabsContent>
       </Tabs>
     </div>
