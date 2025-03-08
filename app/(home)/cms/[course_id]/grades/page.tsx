@@ -7,6 +7,7 @@ import { useSelector } from "react-redux";
 import { RootState } from "@/lib/store";
 import { CourseGrades } from "@/components/cms/grades/CourseGrades";
 import { LabGrades } from "@/components/cms/grades/LabGrades";
+import { InstructorCourseGrades } from "@/components/cms/grades/InstructorCourseGrades";
 
 const Gradebook = () => {
   const [loading, setLoading] = useState(true);
@@ -16,26 +17,33 @@ const Gradebook = () => {
   const [isActive, setIsActive] = useState(true); // Toggle for Active/Previous Course
   const [selectedTab, setSelectedTab] = useState("course"); // Tabs for Course/Lab
   const [courseData, setCourseData] = useState<any>({});
+  const [instructorData, setInstructorData] = useState<any>({});
 
   const fetchStudentData = async (user: any) => {
-
-
     const { data: assessmentData, error: assessmentError } = await supabase.rpc('get_student_assessment_data', {
       p_course_id: course_id,
       p_user_id: user.id
     });
-    
-    
     if (assessmentError) {
       console.error('Error:', assessmentError);
     } else {
       console.log('Assessment Data:', assessmentData);
       // Process your data as needed
     }
+    setCourseData(assessmentData);
+  }
 
-          // console.log(data);
-          setCourseData(assessmentData);
-        }
+  const fetchInstructorData = async (user: any) => {
+    const { data: instructorData, error: instructorError } = await supabase.rpc('get_all_course_assessments_data', {
+      p_course_id: course_id
+    });
+    if (instructorError) {
+      console.error('Error:', instructorError);
+    } else {
+      console.log('Instructor Data:', instructorData);
+      setInstructorData(instructorData);
+    }
+  }
 
   useEffect(() => {
     const fetchCourse = async () => {
@@ -48,6 +56,9 @@ const Gradebook = () => {
 
         if (user.role === "student") {
           fetchStudentData(user);
+        }
+        else if (user.role === "instructor") {
+          fetchInstructorData(user);
         }
 
         // Fetch lab data
@@ -91,7 +102,11 @@ const Gradebook = () => {
 
         {/* Course Tab Content */}
         <TabsContent value="course" className="mt-4">
-          <CourseGrades courseData={courseData} />
+          {user?.role === "student" ? (
+            <CourseGrades courseData={courseData} />
+          ) : (
+            <InstructorCourseGrades instructorData={instructorData} />
+          )}
         </TabsContent>
 
         {/* Lab Tab Content (Placeholder) */}
