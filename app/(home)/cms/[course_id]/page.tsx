@@ -7,27 +7,6 @@ const CourseDashboard = async ({ params }:any ) => {
   const {course_id} = params;
   const supabase = await createClient();
 
-  const courseInfo = {
-    description:
-      "The course introduces students to technical management and engineering concepts and principles. Course covers principles and applications to effectively manage technical projects, people, budgets, and schedules.",
-    objectives: [
-      "Demonstrate the ability to optimize project plans using Engineering Project Management concepts.",
-      "Analyze and utilize tools and techniques to plan, organize, and manage a project with cost-effectiveness.",
-      "Design and plan real-world projects using a project management approach.",
-    ],
-    referenceBooks: [
-      { title: "Management for Engineers", author: "Payne, Andrew C.", year: "1996", isbn: "0-4719-5603-1" },
-      { title: "The Technology Management Handbook", author: "Dorf, Richard C.", year: "1999", isbn: "0-8493-8577-6" },
-      { title: "Culture, Self-Identity, and Work", author: "Erez, Miriam", year: "1993", isbn: "0-1950-7580-3" },
-    ],
-    evaluation: {
-      quizzes: "10%",
-      mse: "30%",
-      assignments: "10%",
-      ese: "50%",
-    },
-  }
-
   const { data: courseData, error } = await supabase
   .from('course_instructor')
   .select(`
@@ -40,12 +19,15 @@ const CourseDashboard = async ({ params }:any ) => {
   .eq('course_id', course_id);
 
   if (error) {
+    console.error("Error fetching course data: ", error);
     return
   }
 
   const instructorName = courseData[0].instructors.user.name;
 
   console.log("CourseData: ",courseData);
+
+  const courseInfo = courseData[0].course_info;
 
   return (
     <div className="p-6 bg-gray-100 min-h-screen">
@@ -54,9 +36,9 @@ const CourseDashboard = async ({ params }:any ) => {
         {/* Header Section */}
         <div className="bg-white p-6 rounded shadow">
           <h1 className="text-xl font-bold text-gray-800">
-            {courseData[0].title}
+            {courseInfo.title}
             <span className="block text-sm font-normal text-gray-600">
-              ({courseData[0].description})
+              ({courseInfo.description})
             </span>
           </h1>
 
@@ -100,7 +82,7 @@ const CourseDashboard = async ({ params }:any ) => {
         <div className="mb-6">
           <h2 className="text-xl font-semibold">Learning Objectives</h2>
           <ul className="list-disc list-inside mt-2 text-gray-700">
-            {courseInfo.objectives.map((objective, index) => (
+            {courseInfo.objectives?.map((objective:any, index:any) => (
               <li key={index}>{objective}</li>
             ))}
           </ul>
@@ -110,7 +92,7 @@ const CourseDashboard = async ({ params }:any ) => {
         <div className="mb-6">
           <h2 className="text-xl font-semibold">Course Text / Reference Books</h2>
           <ul className="list-disc list-inside mt-2 text-gray-700">
-            {courseInfo.referenceBooks.map((book, index) => (
+            {courseInfo.referenceBooks?.map((book:any, index:any) => (
               <li key={index}>
                 <strong>{book.title}</strong> - {book.author} ({book.year}) - ISBN: {book.isbn}
               </li>
@@ -122,10 +104,10 @@ const CourseDashboard = async ({ params }:any ) => {
         <div className="mb-6">
           <h2 className="text-xl font-semibold">Description of Evaluation System</h2>
           <ul className="list-disc list-inside mt-2 text-gray-700">
-            <li>Quizzes: {courseInfo.evaluation.quizzes}</li>
-            <li>Mid-Semester Exam (MSE): {courseInfo.evaluation.mse}</li>
-            <li>Assignments: {courseInfo.evaluation.assignments}</li>
-            <li>End-Semester Exam (ESE): {courseInfo.evaluation.ese}</li>
+            <li>Quizzes: {courseInfo.evaluation?.quizzes}</li>
+            <li>Mid-Semester Exam (MSE): {courseInfo.evaluation?.mse}</li>
+            <li>Assignments: {courseInfo.evaluation?.assignments}</li>
+            <li>End-Semester Exam (ESE): {courseInfo.evaluation?.ese}</li>
           </ul>
         </div>
       </>
