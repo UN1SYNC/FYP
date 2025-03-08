@@ -54,14 +54,10 @@ const CourseDashboard = async ({ params }:any ) => {
         {/* Header Section */}
         <div className="bg-white p-6 rounded shadow">
           <h1 className="text-xl font-bold text-gray-800">
-<<<<<<< Updated upstream
             {courseData[0].title}
             <span className="block text-sm font-normal text-gray-600">
               ({courseData[0].description})
             </span>
-=======
-            {courseInfo.title}
->>>>>>> Stashed changes
           </h1>
 
           <div className="mt-4 p-4 bg-orange-100 text-orange-700 text-sm rounded border border-orange-200">
