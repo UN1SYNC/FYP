@@ -53,10 +53,10 @@ export const InstructorCourseGrades = ({ instructorData }: InstructorDataProps) 
         onOpenChange={(isOpen) => 
           setOpenSections(prev => ({ ...prev, [assessmentType]: isOpen }))
         }
-        className="mb-6"
+        className="mb-4"
       >
-        <Card>
-          <CardHeader>
+        <Card className="border rounded-lg hover:shadow-md transition-shadow">
+          <CardHeader className="py-2">
             <CollapsibleTrigger className="w-full">
               <div className="flex justify-between items-center">
                 <CardTitle className="text-lg capitalize">{assessmentType}</CardTitle>
@@ -69,7 +69,7 @@ export const InstructorCourseGrades = ({ instructorData }: InstructorDataProps) 
             </CollapsibleTrigger>
           </CardHeader>
           <CollapsibleContent>
-            <CardContent>
+            <CardContent className="py-2">
               {assessments.map((assessment, index) => (
                 <Collapsible
                   key={assessment.assessment_id}
@@ -77,9 +77,9 @@ export const InstructorCourseGrades = ({ instructorData }: InstructorDataProps) 
                   onOpenChange={(isOpen) =>
                     setOpenAssessments(prev => ({ ...prev, [assessment.assessment_id]: isOpen }))
                   }
-                  className="mb-4"
+                  className="mb-2"
                 >
-                  <Card>
+                  <Card className="border rounded-lg hover:shadow-md transition-shadow">
                     <CardHeader className="py-3">
                       <CollapsibleTrigger className="w-full">
                         <div className="flex justify-between items-center">
@@ -125,8 +125,8 @@ export const InstructorCourseGrades = ({ instructorData }: InstructorDataProps) 
 
   return (
     <div>
-      <div className="flex justify-between items-center mb-4">
-        <h2 className="text-2xl font-bold">Course Assessments Overview</h2>
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-2xl font-bold">Course Assessments Overview</h1>
         <Button onClick={() => setAddModalOpen(true)}>
           <Plus className="h-4 w-4 mr-2" />
           Add New Result
