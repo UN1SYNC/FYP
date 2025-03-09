@@ -7,17 +7,30 @@ import { motion } from "framer-motion";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import Image from "next/image";
+import { createClient } from "@/utils/supabase/client";
+import { useSelector } from "react-redux";
+import { RootState } from "@/lib/store";
 
 const UniversityConfiguration = () => {
   const router = useRouter();
+  const supabase = createClient();
+  const user = useSelector((state: RootState) => state.auth.user);
   const {
     register,
     handleSubmit,
     formState: { errors },
   } = useForm();
 
-  const onSubmit = (data: any) => {
-    console.log(data);
+  const onSubmit = async (data: any) => {
+    const universityId = user?.details.uni_id;
+    const { data: universityData, error: universityError } = await supabase.from("university").update({
+      name: data.name,
+      location: data.location,
+      sector: data.type,
+    }).eq("id", universityId);
+    if (universityError) {
+      console.log(universityError);
+    }
     router.push("/onboarding?step=select&type=systems");
   };
 
