@@ -31,6 +31,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {useSelector} from "react-redux"
+import { RootState } from "@/lib/store";
 
 interface Section {
   section_id: number;
@@ -51,17 +53,21 @@ interface Batch {
 }
 
 const studentFormSchema = z.object({
-  name: z.string().min(2, "Name must be at least 2 characters"),
+  firstName: z.string().min(2, "First name must be at least 2 characters"),
+  lastName: z.string().min(2, "Last name must be at least 2 characters"),
   email: z.string().email("Invalid email address"),
   password: z.string().min(6, "Password must be at least 6 characters"),
   address: z.string().min(2, "Address is required"),
   phone: z.string().min(10, "Phone number must be at least 10 digits"),
   section_id: z.number({
     required_error: "Section is required",
-  }),
+  }).nullable(),
   degree_id: z.number({
     required_error: "Degree is required",
-  }),
+  }).nullable(),
+  batch_id: z.number({
+    required_error: "Batch is required",
+  }).nullable(),
 });
 
 type StudentFormValues = z.infer<typeof studentFormSchema>;
@@ -75,17 +81,20 @@ export function StudentRegisterForm() {
   const router = useRouter();
   const { toast } = useToast();
   const supabase = createClient();
+  const userData = useSelector((state: RootState)=>state.auth.user)
 
   const form = useForm<StudentFormValues>({
     resolver: zodResolver(studentFormSchema),
     defaultValues: {
-      name: "",
+      firstName: "",
+      lastName: "",
       email: "",
       password: "",
       address: "",
       phone: "",
-      section_id: undefined,
-      degree_id: undefined,
+      section_id: null,
+      degree_id: null,
+      batch_id: null,
     },
   });
 
@@ -133,41 +142,36 @@ export function StudentRegisterForm() {
   const onSubmit = async (values: StudentFormValues) => {
     setIsSubmitting(true);
     try {
-      // First create the auth user
+      // Format phone number (remove non-digits)
+      const phoneNumber = parseInt(values.phone.replace(/\D/g, ''));
+
+      // First create the auth user with formatted data
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: values.email,
         password: values.password,
         options: {
           data: {
-            name: values.name,
+            name: `${values.firstName} ${values.lastName}`,
+            address: values.address,
+            phone: phoneNumber,
+            role: "student",
+          university_id: userData?.details?.uni_id,
           }
         }
       });
 
       if (authError) throw authError;
 
-      // Then create the user record
-      const { error: userError } = await supabase
-        .from('users')
-        .insert({
-          id: authData.user!.id,
-          email: values.email,
-          name: values.name,
-          address: values.address,
-          phone: parseInt(values.phone.replace(/\D/g, '')),
-          role: 'student'
-        });
-
-      if (userError) throw userError;
-
-      // Finally create the student record
+      // Then create the student record
       const { error: studentError } = await supabase
         .from('students')
         .insert({
           user_id: authData.user!.id,
           section_id: values.section_id,
           degree_id: values.degree_id,
+          university_id: userData?.details?.uni_id,
         });
+
 
       if (studentError) throw studentError;
 
@@ -194,34 +198,25 @@ export function StudentRegisterForm() {
   };
 
   // Fetch batches when degree is selected
-  const onDegreeChange = async (degreeId: number) => {
+  const onDegreeChange = async (degreeId: number | null) => {
     try {
-      // Clear dependent fields
       setBatches([]);
       setSections([]);
       
-      // Update form values
       form.setValue('degree_id', degreeId);
-      form.setValue('batch_id', undefined);
-      form.setValue('section_id', undefined);
+      form.setValue('batch_id', null);
+      form.setValue('section_id', null);
 
-      // Fetch batches for the selected degree
-      const { data, error } = await supabase
-        .from('batch')  // This is the correct table name
-        .select(`
-          batch_id,
-          intake,
-          degree_id
-        `)
-        .eq('degree_id', degreeId)
-        .order('intake', { ascending: false });
-      
-      if (error) {
-        console.error('Batch fetch error:', error);
-        throw error;
+      if (degreeId) {
+        const { data, error } = await supabase
+          .from('batch')
+          .select('batch_id, intake, degree_id')
+          .eq('degree_id', degreeId)
+          .order('intake', { ascending: false });
+        
+        if (error) throw error;
+        setBatches(data || []);
       }
-      
-      setBatches(data || []);
     } catch (error: any) {
       console.error('Error details:', error);
       toast({
@@ -233,8 +228,29 @@ export function StudentRegisterForm() {
     }
   };
 
-  const onBatchChange = (batch_id: number) => {
-    // Implement batch change logic if needed
+  const onBatchChange = async (batchId: number | null) => {
+    try {
+      setSections([]);
+      form.setValue('batch_id', batchId);
+      form.setValue('section_id', null);
+
+      if (batchId) {
+        const { data, error } = await supabase
+          .from('sections')
+          .select('section_id, section_name, batch_id')
+          .eq('batch_id', batchId);
+        
+        if (error) throw error;
+        setSections(data || []);
+      }
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to fetch sections",
+        className: "bg-red-500 border-red-500 text-white",
+        duration: 2000,
+      });
+    }
   };
 
   return (
@@ -251,12 +267,26 @@ export function StudentRegisterForm() {
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
               <FormField
                 control={form.control}
-                name="name"
+                name="firstName"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Full Name</FormLabel>
+                    <FormLabel>First Name</FormLabel>
                     <FormControl>
-                      <Input placeholder="Enter full name" {...field} />
+                      <Input placeholder="Enter first name" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="lastName"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Last Name</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Enter last name" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -326,9 +356,11 @@ export function StudentRegisterForm() {
                   <FormItem>
                     <FormLabel>Degree Program</FormLabel>
                     <Select
+                      value={field.value?.toString() || ""}
                       onValueChange={(value) => {
-                        field.onChange(Number(value));
-                        onDegreeChange(Number(value));
+                        const numValue = value ? Number(value) : null;
+                        field.onChange(numValue);
+                        onDegreeChange(numValue);
                       }}
                     >
                       <FormControl>
@@ -359,10 +391,13 @@ export function StudentRegisterForm() {
                   <FormItem>
                     <FormLabel>Batch Year</FormLabel>
                     <Select
+                      value={field.value?.toString() || ""}
                       onValueChange={(value) => {
-                        field.onChange(Number(value));
-                        onBatchChange(Number(value));
+                        const numValue = value ? Number(value) : null;
+                        field.onChange(numValue);
+                        onBatchChange(numValue);
                       }}
+                      disabled={!form.getValues('degree_id')}
                     >
                       <FormControl>
                         <SelectTrigger>
@@ -392,7 +427,12 @@ export function StudentRegisterForm() {
                   <FormItem>
                     <FormLabel>Section</FormLabel>
                     <Select
-                      onValueChange={(value) => field.onChange(Number(value))}
+                      value={field.value?.toString() || ""}
+                      onValueChange={(value) => {
+                        const numValue = value ? Number(value) : null;
+                        field.onChange(numValue);
+                      }}
+                      disabled={!form.getValues('batch_id')}
                     >
                       <FormControl>
                         <SelectTrigger>

@@ -18,19 +18,65 @@ import {
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { useSelector } from "react-redux";
+import { RootState } from "@/lib/store";
+
+// Hardcoded values for dropdowns
+const SPECIALIZATIONS = [
+  "Artificial Intelligence",
+  "Deep Learning",
+  "Machine Learning",
+  "Database Systems",
+  "Web Development",
+  "Cloud Computing",
+  "Cybersecurity"
+];
+
+const DESIGNATIONS = [
+  "Professor",
+  "Associate Professor",
+  "Assistant Professor",
+  "Lecturer",
+  "Senior Lecturer",
+  "Visiting Faculty",
+  "Research Professor"
+];
 
 const instructorFormSchema = z.object({
-  specialization: z.string().min(2, "Specialization is required"),
-  user_id: z.string().uuid("Invalid user ID"),
-  university_id: z.number({
-    required_error: "University ID is required",
+  firstName: z.string().min(2, "First name must be at least 2 characters"),
+  lastName: z.string().min(2, "Last name must be at least 2 characters"),
+  email: z.string().email("Invalid email address"),
+  password: z.string().min(6, "Password must be at least 6 characters"),
+  address: z.string().min(2, "Address is required"),
+  phone: z.string().min(10, "Phone number must be at least 10 digits"),
+  specialization: z.string({
+    required_error: "Specialization is required",
   }),
+  designation: z.string({
+    required_error: "Designation is required",
+  }),
+  experience: z.number({
+    required_error: "Experience is required",
+  })
+    .min(0, "Experience cannot be negative")
+    .refine((val) => val >= 0, "Experience cannot be negative")
+    .refine(
+      (val) => Number.isFinite(val) && (val.toString().split('.')[1] || '').length <= 1,
+      "Experience can have up to 1 decimal place"
+    ),
 });
 
 type InstructorFormValues = z.infer<typeof instructorFormSchema>;
@@ -40,25 +86,57 @@ export function InstructorRegisterForm() {
   const router = useRouter();
   const { toast } = useToast();
   const supabase = createClient();
+  const userData = useSelector((state: RootState) => state.auth.user);
 
   const form = useForm<InstructorFormValues>({
     resolver: zodResolver(instructorFormSchema),
     defaultValues: {
+      firstName: "",
+      lastName: "",
+      email: "",
+      password: "",
+      address: "",
+      phone: "",
       specialization: "",
-      user_id: "",
-      university_id: undefined,
+      designation: "",
+      experience: 0,
     },
   });
 
   const onSubmit = async (values: InstructorFormValues) => {
     setIsSubmitting(true);
     try {
-      const { error } = await supabase
-        .from('instructors')
-        .insert(values)
-        .single();
+      const phoneNumber = parseInt(values.phone.replace(/\D/g, ''));
 
-      if (error) throw error;
+      // First create the auth user
+      const { data: authData, error: authError } = await supabase.auth.signUp({
+        email: values.email,
+        password: values.password,
+        options: {
+          data: {
+            name: `${values.firstName} ${values.lastName}`,
+            address: values.address,
+            phone: phoneNumber,
+            role: "instructor",
+            university_id: userData?.details?.uni_id,
+          }
+        }
+      });
+
+      if (authError) throw authError;
+
+      // Then create the instructor record
+      const { error: instructorError } = await supabase
+        .from('instructors')
+        .insert({
+          user_id: authData.user!.id,
+          specialization: values.specialization,
+          designation: values.designation,
+          experience: values.experience,
+          university_id: userData?.details?.uni_id,
+        });
+
+      if (instructorError) throw instructorError;
 
       toast({
         title: "Success",
@@ -96,13 +174,114 @@ export function InstructorRegisterForm() {
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
               <FormField
                 control={form.control}
+                name="firstName"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>First Name</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Enter first name" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="lastName"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Last Name</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Enter last name" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="email"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Email</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Enter email" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="password"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Password</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Enter password" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="address"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Address</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Enter address" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="phone"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Phone</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Enter phone" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
                 name="specialization"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Specialization</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Enter specialization" {...field} />
-                    </FormControl>
+                    <Select
+                      value={field.value}
+                      onValueChange={field.onChange}
+                    >
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select Specialization" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {SPECIALIZATIONS.map((spec) => (
+                          <SelectItem
+                            key={spec}
+                            value={spec}
+                          >
+                            {spec}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -110,13 +289,30 @@ export function InstructorRegisterForm() {
 
               <FormField
                 control={form.control}
-                name="user_id"
+                name="designation"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>User ID</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Enter user ID" {...field} />
-                    </FormControl>
+                    <FormLabel>Designation</FormLabel>
+                    <Select
+                      value={field.value}
+                      onValueChange={field.onChange}
+                    >
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select Designation" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {DESIGNATIONS.map((designation) => (
+                          <SelectItem
+                            key={designation}
+                            value={designation}
+                          >
+                            {designation}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -124,16 +320,20 @@ export function InstructorRegisterForm() {
 
               <FormField
                 control={form.control}
-                name="university_id"
+                name="experience"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>University ID</FormLabel>
+                    <FormLabel>Experience (Years)</FormLabel>
                     <FormControl>
-                      <Input 
-                        type="number" 
-                        placeholder="Enter university ID"
+                      <Input
+                        type="number"
+                        step="0.1"
+                        min="0"
                         {...field}
-                        onChange={(e) => field.onChange(Number(e.target.value))}
+                        onChange={(e) => {
+                          const value = e.target.value === "" ? "" : Number(e.target.value);
+                          field.onChange(value);
+                        }}
                       />
                     </FormControl>
                     <FormMessage />
