@@ -1,4 +1,3 @@
-import { login, logout } from "@/app/utils/auth";
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
