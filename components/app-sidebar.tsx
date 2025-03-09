@@ -75,12 +75,16 @@ const data = {
           url: "/admin/student-register",
         },
         {
-          title: "Course Register",
-          url: "#",
+          title: "Student Enroll",
+          url: "/admin/student-enroll",
         },
         {
-          title: "Professor Register",
-          url: "#",
+          title: "Course Register",
+          url: "/admin/course-register",
+        },
+        {
+          title: "Instructor Register",
+          url: "/admin/instructor-register",
         },
       ],
     },
