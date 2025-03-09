@@ -1,3 +1,4 @@
+import { login, logout } from "@/app/utils/auth";
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
@@ -70,11 +71,6 @@ export async function updateSession(request: NextRequest) {
   if (!user && protectedRoutes.includes(request.nextUrl.pathname)) {
     return NextResponse.redirect(new URL('/', request.url));
   }
-  if (user && request.nextUrl.pathname === '/') {
-    return NextResponse.redirect(new URL('/dashboard', request.url));
-  }
-
-
 
   return supabaseResponse;
 }

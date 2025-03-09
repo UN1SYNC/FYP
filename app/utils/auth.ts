@@ -30,7 +30,6 @@ export const login = async (
     return;
   }
 
-  // Check if the user role is admin
   const { data:user_details, error:details_error } = await supabase.rpc('get_user_details', {
     user_id_param: data?.user?.id || ''
   })
@@ -49,40 +48,50 @@ export const login = async (
 
   user_details.lastSignIn = data?.user?.last_sign_in_at
 
-  dispatch(loginAction({
-    data: {
-      user: user_details,
-    },
-  }));
-  const userId = user_details?.data?.user?.id;
-  if (data?.user?.role === "authenticated") {
-    const { data, error } = await supabase
-      .from("admins")
+  const userId = user_details?.id;
+  if (user_details?.role === "super-admin") {
+    
+    const { data: modulesData, error: modulesError } = await supabase
+      .from("modules")
       .select("*")
-      .eq("user_id", userId);
-
-    if (data && data.length > 0) {
-      const universityId = data[0].university_id;
-      console.log(universityId);
-      const { data: modulesData, error: modulesError } = await supabase
-        .from("modules")
-        .select("*")
-        .eq("university_id", universityId);
-
-      if (modulesData && modulesData.length > 0) {
-        const modules = modulesData[0]
-        const moduleList = Object.keys(modules).filter((key) => key !== "id" && key !== "created_at" && key !== "university_id");
-        const isAllFalse = moduleList.every((key) => modules[key] === false);
-        if (isAllFalse) {
-          toast({
-            title:"Login Successful",
-            description:"Redirecting to configuration page",
-            className:"bg-green-500 border-green-500 text-white",
-            duration: 1000
-          });
-          router.push("/onboarding");
-          return;
-        }
+      .eq("university_id", user_details.university_id);
+  
+    if (modulesData && modulesData.length > 0) {
+      const modules = modulesData[0]
+      const moduleList = Object.keys(modules).filter((key) => key !== "id" && key !== "created_at" && key !== "university_id");
+      const isAllFalse = moduleList.every((key) => modules[key] === false);
+      if (isAllFalse) {
+        toast({
+          title:"Login Successful",
+          description:"Redirecting to configuration page",
+          className:"bg-green-500 border-green-500 text-white",
+          duration: 1000
+        });
+        dispatch(loginAction({
+          data: {
+            user: user_details,
+          },
+        }));
+        router.push("/onboarding");
+        return;
+      }
+    }
+  } else {
+    // if the user university id has all modules as false, then redirect to error page
+    const { data:modulesData, error:modulesError } = await supabase.from("modules").select("*").eq("university_id", user_details.data.user.university_id);
+    if (modulesData && modulesData.length > 0) {
+      const modules = modulesData[0]
+      const moduleList = Object.keys(modules).filter((key) => key !== "id" && key !== "created_at" && key !== "university_id");
+      const isAllFalse = moduleList.every((key) => modules[key] === false);
+      if (isAllFalse) {
+        toast({
+          title:"Login Successful but configuration by admin is not complete",
+          description:"Redirecting to error page",
+          className:"bg-red-500 border-red-500 text-white",
+          duration: 1000
+        });
+        router.push("/error");
+        return;
       }
     }
   }
@@ -99,6 +108,11 @@ export const login = async (
   //   email: email || "",
   //   id: userId || "",
   // }));
+  dispatch(loginAction({
+    data: {
+      user: user_details,
+    },
+  }));
   router.push("/dashboard");
   return;
 };
@@ -128,17 +142,35 @@ export const logout = async (router: any, toast: any, dispatch: any) => {
 
 // SIGNUP BUTTON FUNCTIONALITY
 export const signup = async (
-  email: string,
-  password: string,
+  formData: any,
   router: any,
   toast: any
 ) => {
   const supabase = createClient();
 
+  
+  // create entry for this user in university table
+  const { data:universityData, error:universityError }:any = await supabase.from("university").insert({
+    name: formData.email,
+  }).select("id");
+  if (universityError) {
+    console.log("universityError",universityError)
+  }
+  const universityId = universityData[0].id;
+  
   const credentialsData = {
-    email: email,
-    password: password,
-  };
+    email: formData.email,
+    password: formData.password,
+    options: {
+      data: {
+        name: formData.firstName+" "+formData.lastName,
+        address: formData.address,
+        phone: formData.phoneNumber,
+        role: "super-admin",
+        university_id: universityId
+      }
+    }
+  }
 
   const { data, error } = await supabase.auth.signUp(credentialsData);
 
@@ -152,6 +184,17 @@ export const signup = async (
     return;
   }
 
+  console.log("data",data)
+
+  
+  // create entry for modules table
+  const { data:modulesData, error:modulesError }:any = await supabase.from("modules").insert({
+    university_id: universityId
+  });
+  if (modulesError) {
+    console.log("modulesError",modulesError)
+  }
+  
   // Show success message without auto-login
   toast({
     title: "Signup Successful",
@@ -160,5 +203,5 @@ export const signup = async (
     duration: 1000,
   });
 
-  // router.push("/login");
+  router.push("/");
 };
