@@ -83,8 +83,8 @@ const data = {
           url: "/admin/course-register",
         },
         {
-          title: "Professor Register",
-          url: "#",
+          title: "Instructor Register",
+          url: "/admin/instructor-register",
         },
       ],
     },
