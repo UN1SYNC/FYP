@@ -65,33 +65,8 @@ const CourseDashboard = async ({ params }:any ) => {
           </div>
         </div>
 
-        <div className="my-6 bg-white p-6 rounded shadow flex flex-wrap items-center justify-between">
-          <div className="flex items-center space-x-4">
-            <div className="flex items-center space-x-2">
-              <span className="px-3 py-1 bg-gray-200 text-gray-700 rounded-full text-sm">SEECS</span>
-              <span className="px-3 py-1 bg-gray-200 text-gray-700 rounded-full text-sm">UG</span>
-              <span className="px-3 py-1 bg-gray-200 text-gray-700 rounded-full text-sm">BSCS-11</span>
-              <span className="px-3 py-1 bg-gray-200 text-gray-700 rounded-full text-sm">Fall 2024</span>
-              <span className="px-3 py-1 bg-gray-200 text-gray-700 rounded-full text-sm">2K21</span>
-            </div>
-            <div className="text-sm text-gray-700 font-medium">{instructorName}</div>
-          </div>
-
-          <div className="flex items-center space-x-4 mt-4 sm:mt-0">
-            <Button variant="default" className="bg-blue-500 text-white hover:bg-blue-600">
-              Activities Summary
-            </Button>
-            <Button variant="outline" className="border-blue-500 text-blue-500 hover:bg-blue-50">
-              Download Center
-            </Button>
-            <Button variant="outline" className="border-blue-500 text-blue-500 hover:bg-blue-50">
-              Participants
-            </Button>
-          </div>
-        </div>
-
         {/* Course Description */}
-        <div className="mb-6">
+        <div className="my-6">
           <h2 className="text-xl font-semibold">Course Description</h2>
           <p className="text-gray-700 mt-2">{courseInfo.description}</p>
         </div>
