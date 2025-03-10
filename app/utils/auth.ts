@@ -1,13 +1,14 @@
 import { createClient } from "@/utils/supabase/client";
 import { loginAction, logoutAction } from "../../lib/features/auth/authSlice";
+import { AppRouterInstance } from 'next/dist/shared/lib/app-router-context.shared-runtime';
 
 // LOGIN BUTTON FUNCTIONALITY
 export const login = async (
   email: string,
   password: string,
-  router: any,
+  router: AppRouterInstance,
   toast: any,
-  dispatch: any // Pass dispatch as an argument
+  dispatch?: any // Pass dispatch as an argument
 ) => {
   const supabase = createClient();
 
@@ -121,7 +122,7 @@ export const login = async (
 };
 
 // LOGOUT BUTTON FUNCTIONALITY
-export const logout = async (router: any, toast: any, dispatch: any) => {
+export const logout = async (router: AppRouterInstance) => {
   const supabase = createClient();
 
   const { error } = await supabase.auth.signOut();
@@ -132,79 +133,35 @@ export const logout = async (router: any, toast: any, dispatch: any) => {
   }
 
   // Dispatch logout action to clear user data from Redux
-  dispatch(logoutAction());
-  toast({
-    title: "Logout Successful",
-    description: "Redirecting to homepage",
-    className: "bg-green-500 border-green-500 text-white",
-    duration: 1000,
-  });
-
-  router.push("/"); // Redirect to the homepage
+  router.push("/login"); // Redirect to the login page
 };
 
 // SIGNUP BUTTON FUNCTIONALITY
-export const signup = async (
-  formData: any,
-  router: any,
-  toast: any
-) => {
+export const signup = async (formData: any, router: AppRouterInstance, toast: any) => {
   const supabase = createClient();
-
   
-  // create entry for this user in university table
-  const { data:universityData, error:universityError }:any = await supabase.from("university").insert({
-    name: formData.email,
-  }).select("id");
-  if (universityError) {
-    console.log("universityError",universityError)
-  }
-  const universityId = universityData[0].id;
-  
-  const credentialsData = {
-    email: formData.email,
-    password: formData.password,
-    options: {
-      data: {
-        name: formData.firstName+" "+formData.lastName,
-        address: formData.address,
-        phone: formData.phoneNumber,
-        role: "super-admin",
-        university_id: universityId
-      }
-    }
-  }
-
-  const { data, error } = await supabase.auth.signUp(credentialsData);
-
-  if (error) {
-    toast({
-      title: "Signup Failed",
-      description: error.message,
-      className: "bg-red-500 border-red-500 text-white",
-      duration: 1000,
+  try {
+    const { data, error } = await supabase.auth.signUp({
+      email: formData.email,
+      password: formData.password,
     });
-    return;
+    
+    if (error) throw error;
+    
+    toast({
+      title: "Account created",
+      description: "Please check your email to verify your account."
+    });
+    
+    router.push('/login');
+    return data;
+  } catch (error: any) {
+    console.error('Error signing up:', error.message);
+    toast({
+      title: "Error",
+      description: error.message,
+      variant: "destructive"
+    });
+    return null;
   }
-
-  console.log("data",data)
-
-  
-  // create entry for modules table
-  const { data:modulesData, error:modulesError }:any = await supabase.from("modules").insert({
-    university_id: universityId
-  });
-  if (modulesError) {
-    console.log("modulesError",modulesError)
-  }
-  
-  // Show success message without auto-login
-  toast({
-    title: "Signup Successful",
-    description: "Please check your email to verify your account.",
-    className: "bg-green-500 border-green-500 text-white",
-    duration: 1000,
-  });
-
-  router.push("/");
 };
