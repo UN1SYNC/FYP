@@ -76,25 +76,28 @@ export const login = async (
         return;
       }
     }
-  } else {
-    // if the user university id has all modules as false, then redirect to error page
-    const { data:modulesData, error:modulesError } = await supabase.from("modules").select("*").eq("university_id", user_details.data.user.university_id);
-    if (modulesData && modulesData.length > 0) {
-      const modules = modulesData[0]
-      const moduleList = Object.keys(modules).filter((key) => key !== "id" && key !== "created_at" && key !== "university_id");
-      const isAllFalse = moduleList.every((key) => modules[key] === false);
-      if (isAllFalse) {
-        toast({
-          title:"Login Successful but configuration by admin is not complete",
-          description:"Redirecting to error page",
-          className:"bg-red-500 border-red-500 text-white",
-          duration: 1000
-        });
-        router.push("/error");
-        return;
-      }
-    }
-  }
+  } 
+  // else {
+  //   // if the user university id has all modules as false, then redirect to error page
+  //   const { data:modulesData, error:modulesError } = await supabase.from("modules").select("*").eq("university_id", user_details.data.user.university_id);
+  //   if (modulesData && modulesData.length > 0) {
+  //     const modules = modulesData[0]
+  //     const moduleList = Object.keys(modules).filter((key) => key !== "id" && key !== "created_at" && key !== "university_id");
+  //     const isAllFalse = moduleList.every((key) => modules[key] === false);
+  //     if (isAllFalse) {
+  //       toast({
+  //         title:"Login Successful but configuration by admin is not complete",
+  //         description:"Redirecting to error page",
+  //         className:"bg-red-500 border-red-500 text-white",
+  //         duration: 1000
+  //       });
+  //       router.push("/error");
+  //       return;
+  //     }
+  //   }
+  // }
+
+
   
   toast({
     title:"Login Successful",
