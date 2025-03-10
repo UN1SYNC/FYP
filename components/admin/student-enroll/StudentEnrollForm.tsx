@@ -321,9 +321,9 @@ export function StudentEnrollForm() {
 
   return (
     <div className="flex min-h-screen w-full items-start justify-center p-4 md:p-8">
-      <Card className="w-full max-w-4xl">
+      <Card className="w-full">
         <CardHeader>
-          <CardTitle className="text-2xl">Batch Enrollment</CardTitle>
+          <CardTitle className="text-2xl">Student Enrollment</CardTitle>
           <CardDescription>
             Enroll multiple students in a course
           </CardDescription>

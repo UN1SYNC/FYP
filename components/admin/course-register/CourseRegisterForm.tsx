@@ -82,11 +82,11 @@ export function CourseRegisterForm() {
 
   return (
     <div className="flex min-h-screen w-full items-start justify-center p-4 md:p-8">
-      <Card className="w-full max-w-2xl">
+      <Card className="w-full">
         <CardHeader>
-          <CardTitle className="text-2xl">Course Registration</CardTitle>
+          <CardTitle className="text-2xl">Register Course</CardTitle>
           <CardDescription>
-            Enter course details to register in the system
+            Add a new course to the system
           </CardDescription>
         </CardHeader>
         <CardContent>

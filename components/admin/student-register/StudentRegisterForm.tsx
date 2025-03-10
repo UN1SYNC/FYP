@@ -255,7 +255,7 @@ export function StudentRegisterForm() {
 
   return (
     <div className="flex min-h-screen w-full items-start justify-center p-4 md:p-8">
-      <Card className="w-full max-w-xl">
+      <Card className="w-full">
         <CardHeader>
           <CardTitle className="text-2xl">Register Student</CardTitle>
           <CardDescription>

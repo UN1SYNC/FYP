@@ -64,30 +64,6 @@ const data = {
         },
       ],
     },
-    {
-      title: "Admin",
-      url: "#",
-      icon: SquareTerminal,
-      isActive: true,
-      items: [
-        {
-          title: "Student Register",
-          url: "/admin/student-register",
-        },
-        {
-          title: "Student Enroll",
-          url: "/admin/student-enroll",
-        },
-        {
-          title: "Course Register",
-          url: "/admin/course-register",
-        },
-        {
-          title: "Instructor Register",
-          url: "/admin/instructor-register",
-        },
-      ],
-    },
   ]
 };
 
