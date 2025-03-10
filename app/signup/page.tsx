@@ -1,14 +1,25 @@
-"use client";
+import React from "react";
+import { Shell } from "@/components/shell";
+import { GridPattern } from "@/components/grid-pattern";
+import { Skeleton } from "@/components/ui/skeleton";
 import SignUpForm from "@/components/signup-form";
 
 export default function Page() {
   return (
-    <div className="flex min-h-svh w-full items-center justify-center p-6 md:p-10 bg-gradient-to-r from-teal-400 to-blue-500">
-      <div className="flex min-h-svh w-full items-center justify-center p-6 md:p-10">
-        <div className="w-full max-w-sm">
-          <SignUpForm />
+    <Shell className="h-[calc(100vh-4rem)] max-w-screen m-auto">
+      <GridPattern
+        width={30}
+        height={30}
+        x={-1}
+        y={-1}
+        strokeDasharray={"4 2"}
+        className="[mask-image:radial-gradient(1024px_circle_at_left_top,white,transparent)]"
+      />
+      <React.Suspense fallback={<Skeleton className="size-full" />}>
+        <div className="w-full max-w-4xl mx-auto bg-white z-10">
+          <SignUpForm/>
         </div>
-      </div>
-    </div>
-  );
+      </React.Suspense>
+    </Shell>
+  )
 }
