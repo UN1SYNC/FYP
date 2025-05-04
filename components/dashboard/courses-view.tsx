@@ -88,7 +88,7 @@ const CoursesView = () => {
 
   // RETURN TSX
   return (
-    <div>
+    <div className="container mx-auto px-4 py-6">
       {courseCardData.length > 0 ? (
         <CourseCard courseCardData={courseCardData} />
       ) : (

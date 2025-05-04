@@ -24,6 +24,12 @@ export default function Content({ course_id }: { course_id: string }) {
         return;
       }
 
+      // Ensure data is an array before using reduce
+      if (!Array.isArray(data)) {
+        console.error('Unexpected data format, expected array:', data);
+        return;
+      }
+
       // Group materials by week
       const weekMap = data.reduce((acc: { [key: string]: Week }, item) => {
         const weekKey = `Week ${item.week_no}`;

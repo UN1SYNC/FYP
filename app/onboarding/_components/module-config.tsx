@@ -78,6 +78,12 @@ const CMSModuleConfigure = () => {
         .select("*")
         .eq("user_id", userId);
 
+      if (!data || data.length === 0) {
+        console.error("No admin data found for this user");
+        alert("Configuration failed. Please contact support.");
+        return;
+      }
+
       if (data && data.length > 0) {
         const universityId = data[0].university_id;
         console.log(universityId);

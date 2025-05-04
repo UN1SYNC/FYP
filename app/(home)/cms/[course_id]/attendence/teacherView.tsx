@@ -29,8 +29,8 @@ const MarkAttendancePage = () => {
   // Fetch current session and enrolled students.
   useEffect(() => {
     const fetchSessionAndStudents = async () => {
-      if (!user) return;
-      const teacher_id = user.details.user_id; // Assuming teacher's id is stored here
+      if (!user || !user.details) return;
+      const teacher_id = user.details.user_id || ""; // Add null check with default value
 
       // 1. Try to fetch an active class session for today.
       let { data: sessionData, error: sessionError } = await supabase
@@ -68,7 +68,7 @@ const MarkAttendancePage = () => {
           // Assume one recurring session per day per course.
           const recurringSession = recurringData[0];
           console.log("Recurring session found:", recurringSession);
-          // Check if the current time is within the recurring session’s times.
+          // Check if the current time is within the recurring session's times.
           if (
             currentTime >= recurringSession.start_time &&
             currentTime <= recurringSession.end_time
@@ -162,8 +162,8 @@ const MarkAttendancePage = () => {
   // Fetch previous sessions for the current week (excluding today)
   useEffect(() => {
     const fetchPreviousSessions = async () => {
-      if (!user) return;
-      const teacher_id = user.details.user_id;
+      if (!user || !user.details) return;
+      const teacher_id = user.details.user_id || ""; // Add null check with default value
       const now = new Date();
       const day = now.getDay(); // 0 for Sunday
       const weekStart = new Date(now.getFullYear(), now.getMonth(), now.getDate() - day);
@@ -278,7 +278,7 @@ const MarkAttendancePage = () => {
               {students.map((student, index) => (
                 <tr key={student.student_id} className="odd:bg-white even:bg-gray-50">
                   <td className="px-4 py-2 border text-center">{index + 1}</td>
-                  <td className="px-4 py-2 border">{student.user.name}</td>
+                  <td className="px-4 py-2 border">{student?.user?.name || 'Unknown Student'}</td>
                   <td className="px-4 py-2 border text-center">
                     {existingAttendance[student.student_id] ? (
                       <span>

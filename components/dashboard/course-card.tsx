@@ -19,7 +19,7 @@ export function CourseCard({ courseCardData } : any) {
   };
 
   return (
-    <div className="flex flex-wrap justify-between gap-y-4">
+    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
       {loading ? (
         <div className="w-full flex justify-center">
           <Loading />
@@ -31,18 +31,23 @@ export function CourseCard({ courseCardData } : any) {
           return (
             <Card
               key={index}
-              className="w-[330px] h-[160px] hover:shadow-md hover:shadow-black bg-muted/80 cursor-pointer"
+              className="w-full h-40 hover:shadow-md hover:shadow-black cursor-pointer"
               onClick={() => handleCourseClick(courseSlug)}
             >
-              <CardHeader>
-                <CardTitle>{course.title || "Untitled Course"}</CardTitle>
-                <CardDescription>
-                  {course.faculty_id ? `Faculty ID: ${course.faculty_id}` : "Unknown Faculty"}  
-                  {/* faculty_id need to be changed to instructor_id and get from course_instructor table */}
-                </CardDescription>
+              <CardHeader className="bg-primary text-primary-foreground rounded-t-xl px-6 py-4">
+                <CardTitle className="text-lg font-semibold">
+                  {course.title || "Untitled Course"}
+                </CardTitle>
               </CardHeader>
-              <CardContent>
-                <p>{course.description || "No description available."}</p>
+              <CardDescription className="text-sm text-muted-foreground text-left px-6 py-2">
+                {course.faculty_id
+                  ? `Faculty ID: ${course.faculty_id}`
+                  : "Unknown Faculty"}
+              </CardDescription>
+              <CardContent className="border-t border-muted p-4 pt-2">
+                <p className="text-sm text-muted-foreground">
+                  {course.description || "No description available."}
+                </p>
               </CardContent>
             </Card>
           );
