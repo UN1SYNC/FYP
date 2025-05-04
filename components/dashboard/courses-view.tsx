@@ -10,6 +10,7 @@ type User = {
   email?: string;
   user_metadata?: {
     full_name?: string;
+    role?: string;
   };
 };
 
@@ -42,41 +43,86 @@ const CoursesView = () => {
         return;
       }
 
-      const { data: studentData } = await supabase
-        .from("students")
-        .select("student_id")
-        .eq("user_id", user.id);
+      try {
+        if (user.user_metadata?.role === "student") {
+          // Fetch courses for student
+          const { data: studentData } = await supabase
+            .from("students")
+            .select("student_id")
+            .eq("user_id", user.id);
 
-      if (!studentData || studentData.length === 0) {
-        console.log("No student found for this user.");
+          if (!studentData || studentData.length === 0) {
+            console.log("No student found for this user.");
+            setCourseCardData([]);
+            setLoading(false);
+            return;
+          }
+
+          const studentId = studentData[0].student_id;
+
+          const { data: enrollmentsData } = await supabase
+            .from("enrollments")
+            .select("course_id")
+            .eq("student_id", studentId);
+
+          if (!enrollmentsData || enrollmentsData.length === 0) {
+            console.log("No enrollments found.");
+            setCourseCardData([]);
+            setLoading(false);
+            return;
+          }
+
+          const { data: courseData } = await supabase
+            .from("courses")
+            .select("*")
+            .in(
+              "course_id",
+              enrollmentsData.map((e) => e.course_id)
+            );
+          setCourseCardData(courseData || []);
+        } else if (user.user_metadata?.role === "instructor") {
+          // Fetch courses for instructor
+          const { data: instructorData } = await supabase
+            .from("instructors")
+            .select("instructor_id")
+            .eq("user_id", user.id);
+
+          if (!instructorData || instructorData.length === 0) {
+            console.log("No instructor found for this user.");
+            setCourseCardData([]);
+            setLoading(false);
+            return;
+          }
+
+          const instructorId = instructorData[0].instructor_id;
+
+          const { data: courseInstructorData } = await supabase
+            .from("course_instructor")
+            .select("course_id")
+            .eq("instructor_id", instructorId);
+
+          if (!courseInstructorData || courseInstructorData.length === 0) {
+            console.log("No courses assigned to this instructor.");
+            setCourseCardData([]);
+            setLoading(false);
+            return;
+          }
+
+          const { data: courseData } = await supabase
+            .from("courses")
+            .select("*")
+            .in(
+              "course_id",
+              courseInstructorData.map((ci) => ci.course_id)
+            );
+          setCourseCardData(courseData || []);
+        }
+      } catch (error) {
+        console.error("Error fetching course data:", error);
         setCourseCardData([]);
+      } finally {
         setLoading(false);
-        return;
       }
-
-      const studentId = studentData[0].student_id;
-
-      const { data: enrollmentsData } = await supabase
-        .from("enrollments")
-        .select("course_id")
-        .eq("student_id", studentId);
-
-      if (!enrollmentsData || enrollmentsData.length === 0) {
-        console.log("No enrollments found.");
-        setCourseCardData([]);
-        setLoading(false);
-        return;
-      }
-
-      const { data: courseData } = await supabase
-        .from("courses")
-        .select("*")
-        .in(
-          "course_id",
-          enrollmentsData.map((e) => e.course_id)
-        );
-      setCourseCardData(courseData || []);
-      setLoading(false);
     };
 
     if (user) fetchCourseCardData();
