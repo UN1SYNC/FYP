@@ -158,7 +158,26 @@ export const signup = async (
   }).select("id");
   if (universityError) {
     console.log("universityError",universityError)
+    toast({
+      title: "Signup Failed",
+      description: "Error creating university entry",
+      className: "bg-red-500 border-red-500 text-white",
+      duration: 1000,
+    });
+    return;
   }
+  
+  // Add null check before accessing universityData
+  if (!universityData || universityData.length === 0) {
+    toast({
+      title: "Signup Failed",
+      description: "Failed to create university record",
+      className: "bg-red-500 border-red-500 text-white",
+      duration: 1000,
+    });
+    return;
+  }
+  
   const universityId = universityData[0].id;
   
   const credentialsData = {

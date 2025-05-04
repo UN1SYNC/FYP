@@ -71,12 +71,26 @@ export default function AdminDashboard() {
       color: "bg-gray-100",
     },
     {
+      title: "Course Assignment",
+      description: "Assign courses to instructors",
+      href: "/admin/course-assignment",
+      icon: <BookOpen className="h-8 w-8" />,
+      color: "bg-gray-100",
+    },
+    {
       title: "Instructor Registration",
       description: "Add and manage instructors/teachers",
       href: "/admin/instructor-register",
       icon: <User className="h-8 w-8" />,
       color: "bg-gray-100",
     },
+    {
+      title: "Admin Registration",
+      description: "Add new administrators to the system",
+      href: "/admin/admin-register",
+      icon: <Users className="h-8 w-8" />,
+      color: "bg-gray-100",
+    }
   ];
 
   // Recent activity - in a real app, you'd fetch this from your database
