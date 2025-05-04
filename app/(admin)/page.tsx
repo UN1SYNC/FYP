@@ -12,40 +12,22 @@ import {
 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { getDashboardStats, getRecentActivity } from '@/lib/api/dashboard';
 
-export default function AdminDashboard() {
-  // Dashboard stats - in a real app, you'd fetch these from your API/database
-  const stats = [
-    {
-      title: "Total Students",
-      value: 2458,
-      change: 12.5,
-      increase: true,
-      icon: <Users className="h-8 w-8 text-black" />,
-    },
-    {
-      title: "Enrolled Today",
-      value: 43,
-      change: 8.2,
-      increase: true,
-      icon: <UserPlus className="h-8 w-8 text-black" />,
-    },
-    {
-      title: "Active Courses",
-      value: 156,
-      change: -3.1,
-      increase: false,
-      icon: <BookOpen className="h-8 w-8 text-black" />,
-    },
-    {
-      title: "Universities",
-      value: 18,
-      change: 0,
-      increase: true,
-      icon: <School className="h-8 w-8 text-black" />,
-    },
-  ];
+export default async function AdminDashboard() {
+  // Fetch dynamic dashboard data from Supabase
+  const { stats } = await getDashboardStats();
+  console.log(stats)
+  const recentActivity = await getRecentActivity();
 
+  // Map icon names to actual components
+  const iconComponents = {
+    Users: <Users className="h-8 w-8 text-black" />,
+    UserPlus: <UserPlus className="h-8 w-8 text-black" />,
+    BookOpen: <BookOpen className="h-8 w-8 text-black" />,
+    School: <School className="h-8 w-8 text-black" />,
+  };
+  
   // Quick access cards
   const quickAccessLinks = [
     {
@@ -85,40 +67,6 @@ export default function AdminDashboard() {
     },
   ];
 
-  // Recent activity - in a real app, you'd fetch this from your database
-  const recentActivity = [
-    {
-      id: 1,
-      action: "Student Registered",
-      name: "Ahmed Hassan",
-      timestamp: "2 minutes ago",
-    },
-    {
-      id: 2,
-      action: "Course Added",
-      name: "Introduction to Data Science",
-      timestamp: "15 minutes ago",
-    },
-    {
-      id: 3,
-      action: "Student Enrolled",
-      name: "Fatima Khan in Algorithms",
-      timestamp: "48 minutes ago",
-    },
-    {
-      id: 4,
-      action: "Faculty Added",
-      name: "Dr. Amina Shaheen",
-      timestamp: "1 hour ago",
-    },
-    {
-      id: 5,
-      action: "University Updated",
-      name: "UET Lahore",
-      timestamp: "3 hours ago",
-    },
-  ];
-
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
@@ -139,7 +87,7 @@ export default function AdminDashboard() {
                 {stat.title}
               </CardTitle>
               <div className="p-2 rounded-full bg-gray-100">
-                {stat.icon}
+                {iconComponents[stat.icon as keyof typeof iconComponents]}
               </div>
             </CardHeader>
             <CardContent>
