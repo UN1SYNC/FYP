@@ -52,6 +52,12 @@ interface Batch {
   degree_id: number;
 }
 
+interface School {
+  id: number;
+  name: string;
+  uni_id: number;
+}
+
 const studentFormSchema = z.object({
   firstName: z.string().min(2, "First name must be at least 2 characters"),
   lastName: z.string().min(2, "Last name must be at least 2 characters"),
@@ -59,6 +65,9 @@ const studentFormSchema = z.object({
   password: z.string().min(6, "Password must be at least 6 characters"),
   address: z.string().min(2, "Address is required"),
   phone: z.string().min(10, "Phone number must be at least 10 digits"),
+  school_id: z.number({
+    required_error: "School is required",
+  }).nullable(),
   section_id: z.number({
     required_error: "Section is required",
   }).nullable(),
@@ -77,6 +86,7 @@ export function StudentRegisterForm() {
   const [sections, setSections] = useState<Section[]>([]);
   const [degrees, setDegrees] = useState<Degree[]>([]);
   const [batches, setBatches] = useState<Batch[]>([]);
+  const [schools, setSchools] = useState<School[]>([]);
   
   const router = useRouter();
   const { toast } = useToast();
@@ -92,52 +102,36 @@ export function StudentRegisterForm() {
       password: "",
       address: "",
       phone: "",
+      school_id: null,
       section_id: null,
       degree_id: null,
       batch_id: null,
     },
   });
 
-  // Fetch sections and degrees on component mount
   useEffect(() => {
-    async function fetchData() {
+    async function fetchSchools() {
+      if (!userData?.details?.uni_id) return;
+      
       try {
-        // Fetch sections
-        const { data: sectionsData, error: sectionsError } = await supabase
-          .from('sections')
-          .select('section_id, section_name, batch_id');
+        const { data, error } = await supabase
+          .from('school')
+          .select('id, name, uni_id')
+          .eq('uni_id', userData.details.uni_id);
         
-        if (sectionsError) throw sectionsError;
-        setSections(sectionsData || []);
-
-        // Fetch degrees
-        const { data: degreesData, error: degreesError } = await supabase
-          .from('degree')
-          .select('degree_id, degree_name, duration');
-        
-        if (degreesError) throw degreesError;
-        setDegrees(degreesData || []);
-
-        // Changed from 'batches' to 'batch'
-        const { data: batchesData, error: batchesError } = await supabase
-          .from('batch')
-          .select('batch_id, intake, degree_id');
-
-          console.log("batchesData: ", batchesData);
-        
-        if (batchesError) throw batchesError;
-        setBatches(batchesData || []);
+        if (error) throw error;
+        setSchools(data || []);
       } catch (error: any) {
         toast({
           title: "Error",
-          description: error.message || "Failed to fetch data",
+          description: error.message || "Failed to fetch schools",
           className: "bg-red-500 border-red-500 text-white",
           duration: 2000,
         });
       }
     }
-    fetchData();
-  }, []);
+    fetchSchools();
+  }, [userData]);
 
   const onSubmit = async (values: StudentFormValues) => {
     setIsSubmitting(true);
@@ -155,7 +149,7 @@ export function StudentRegisterForm() {
             address: values.address,
             phone: phoneNumber,
             role: "student",
-          university_id: userData?.details?.uni_id,
+            university_id: userData?.details?.uni_id,
           }
         }
       });
@@ -169,9 +163,9 @@ export function StudentRegisterForm() {
           user_id: authData.user!.id,
           section_id: values.section_id,
           degree_id: values.degree_id,
+          school_id: values.school_id,
           university_id: userData?.details?.uni_id,
         });
-
 
       if (studentError) throw studentError;
 
@@ -197,7 +191,37 @@ export function StudentRegisterForm() {
     }
   };
 
-  // Fetch batches when degree is selected
+  const onSchoolChange = async (schoolId: number | null) => {
+    try {
+      setDegrees([]);
+      setBatches([]);
+      setSections([]);
+      
+      form.setValue('school_id', schoolId);
+      form.setValue('degree_id', null);
+      form.setValue('batch_id', null);
+      form.setValue('section_id', null);
+
+      if (schoolId) {
+        // Fetch degrees filtered by school_id
+        const { data, error } = await supabase
+          .from('degree')
+          .select('degree_id, degree_name, duration')
+          .eq('school_id', schoolId);
+        
+        if (error) throw error;
+        setDegrees(data || []);
+      }
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to fetch degrees for the selected school",
+        className: "bg-red-500 border-red-500 text-white",
+        duration: 2000,
+      });
+    }
+  };
+
   const onDegreeChange = async (degreeId: number | null) => {
     try {
       setBatches([]);
@@ -351,6 +375,47 @@ export function StudentRegisterForm() {
 
               <FormField
                 control={form.control}
+                name="school_id"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>School</FormLabel>
+                    <Select
+                      value={field.value?.toString() || ""}
+                      onValueChange={(value) => {
+                        const numValue = value ? Number(value) : null;
+                        field.onChange(numValue);
+                        onSchoolChange(numValue);
+                      }}
+                    >
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select School" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {schools.length === 0 ? (
+                          <SelectItem value="empty" disabled>
+                            No schools available
+                          </SelectItem>
+                        ) : (
+                          schools.map((school) => (
+                            <SelectItem
+                              key={school.id}
+                              value={String(school.id)}
+                            >
+                              {school.name}
+                            </SelectItem>
+                          ))
+                        )}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
                 name="degree_id"
                 render={({ field }) => (
                   <FormItem>
@@ -362,6 +427,7 @@ export function StudentRegisterForm() {
                         field.onChange(numValue);
                         onDegreeChange(numValue);
                       }}
+                      disabled={!form.getValues('school_id')}
                     >
                       <FormControl>
                         <SelectTrigger>
@@ -369,14 +435,24 @@ export function StudentRegisterForm() {
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {degrees.map((degree) => (
-                          <SelectItem
-                            key={degree.degree_id}
-                            value={String(degree.degree_id)}
-                          >
-                            {degree.degree_name}
+                        {!form.getValues('school_id') ? (
+                          <SelectItem value="empty" disabled>
+                            Please select a school first
                           </SelectItem>
-                        ))}
+                        ) : degrees.length === 0 ? (
+                          <SelectItem value="empty" disabled>
+                            No degrees available for this school
+                          </SelectItem>
+                        ) : (
+                          degrees.map((degree) => (
+                            <SelectItem
+                              key={degree.degree_id}
+                              value={String(degree.degree_id)}
+                            >
+                              {degree.degree_name}
+                            </SelectItem>
+                          ))
+                        )}
                       </SelectContent>
                     </Select>
                     <FormMessage />

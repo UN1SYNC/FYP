@@ -1,11 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
 import { useToast } from "@/hooks/use-toast";
+import { useSelector } from "react-redux";
+import { RootState } from "@/lib/store";
 import {
   Form,
   FormControl,
@@ -23,22 +25,37 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+
+interface School {
+  id: number;
+  name: string;
+  uni_id: number;
+}
 
 const courseFormSchema = z.object({
   title: z.string().min(2, "Course title is required"),
   course_code: z.string().min(2, "Course code is required"),
   description: z.string().optional(),
   no_weeks: z.number().min(1, "Number of weeks must be at least 1"),
-  prerequisite: z.number().nullable(),
   school_id: z.number().nullable(),
+  credit_hours: z.number().min(1, "Credit hours must be at least 1"),
 });
 
 type CourseFormValues = z.infer<typeof courseFormSchema>;
 
 export function CourseRegisterForm() {
   const [isLoading, setIsLoading] = useState(false);
+  const [schools, setSchools] = useState<School[]>([]);
   const { toast } = useToast();
   const supabase = createClientComponentClient();
+  const userData = useSelector((state: RootState) => state.auth.user);
 
   const form = useForm<CourseFormValues>({
     resolver: zodResolver(courseFormSchema),
@@ -47,10 +64,34 @@ export function CourseRegisterForm() {
       course_code: "",
       description: "",
       no_weeks: 1,
-      prerequisite: null,
       school_id: null,
+      credit_hours: 3,
     },
   });
+
+  useEffect(() => {
+    async function fetchSchools() {
+      if (!userData?.details?.uni_id) return;
+      
+      try {
+        const { data, error } = await supabase
+          .from('school')
+          .select('id, name, uni_id')
+          .eq('uni_id', userData.details.uni_id);
+        
+        if (error) throw error;
+        setSchools(data || []);
+      } catch (error) {
+        toast({
+          title: "Error",
+          description: "Failed to fetch schools",
+          variant: "destructive",
+        });
+      }
+    }
+    
+    fetchSchools();
+  }, [userData, supabase, toast]);
 
   async function onSubmit(data: CourseFormValues) {
     setIsLoading(true);
@@ -162,18 +203,35 @@ export function CourseRegisterForm() {
 
                 <FormField
                   control={form.control}
-                  name="prerequisite"
+                  name="school_id"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Prerequisite ID</FormLabel>
+                      <FormLabel>School</FormLabel>
                       <FormControl>
-                        <Input 
-                          type="number"
-                          placeholder="Optional"
-                          {...field}
-                          value={field.value || ''}
-                          onChange={e => field.onChange(e.target.value ? parseInt(e.target.value) : null)}
-                        />
+                        <Select
+                          value={field.value?.toString() || ""}
+                          onValueChange={(value) => field.onChange(value ? parseInt(value) : null)}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select School" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {schools.length === 0 ? (
+                              <SelectItem value="empty" disabled>
+                                No schools available
+                              </SelectItem>
+                            ) : (
+                              schools.map((school) => (
+                                <SelectItem
+                                  key={school.id}
+                                  value={String(school.id)}
+                                >
+                                  {school.name}
+                                </SelectItem>
+                              ))
+                            )}
+                          </SelectContent>
+                        </Select>
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -182,17 +240,17 @@ export function CourseRegisterForm() {
 
                 <FormField
                   control={form.control}
-                  name="school_id"
+                  name="credit_hours"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>School ID</FormLabel>
+                      <FormLabel>Credit Hours</FormLabel>
                       <FormControl>
                         <Input 
-                          type="number"
-                          placeholder="Optional"
+                          type="number" 
+                          min={1}
+                          placeholder="3"
                           {...field}
-                          value={field.value || ''}
-                          onChange={e => field.onChange(e.target.value ? parseInt(e.target.value) : null)}
+                          onChange={e => field.onChange(parseInt(e.target.value))}
                         />
                       </FormControl>
                       <FormMessage />
