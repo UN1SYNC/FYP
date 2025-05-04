@@ -68,9 +68,19 @@ function AdminSidebar() {
       icon: <BookOpen size={20} />,
     },
     {
+      name: "Course Assignment",
+      href: "/admin/course-assignment",
+      icon: <BookOpen size={20} />,
+    },
+    {
       name: "Instructor Registration",
       href: "/admin/instructor-register",
       icon: <User size={20} />,
+    },
+    {
+      name: "Admin Registration",
+      href: "/admin/admin-register",
+      icon: <Users size={20} />,
     },
     {
       name: "Settings",
