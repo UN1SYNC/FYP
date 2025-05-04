@@ -33,6 +33,8 @@ import {
 import { Checkbox } from "@/components/ui/checkbox";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import Loading from "@/components/ui/loading";
+import { useSelector } from "react-redux";
+import { RootState } from "@/lib/store";
 
 // Updated interfaces based on DB schema
 interface Degree {
@@ -86,8 +88,18 @@ interface Course {
   updated_at?: string;
 }
 
+// Add School interface
+interface School {
+  id: number;
+  name: string;
+  uni_id: number;
+}
+
 // Updated schema to match DB fields
 const enrollmentFormSchema = z.object({
+  school_id: z.number({
+    required_error: "School is required",
+  }),
   degree_id: z.number({
     required_error: "Degree is required",
   }),
@@ -114,6 +126,9 @@ export function StudentEnrollForm() {
   const [students, setStudents] = useState<Student[]>([]);
   const [selectAll, setSelectAll] = useState(false);
   const [courses, setCourses] = useState<Course[]>([]);
+  const [schools, setSchools] = useState<School[]>([]);
+  
+  const userData = useSelector((state: RootState) => state.auth.user);
   
   const router = useRouter();
   const { toast } = useToast();
@@ -123,16 +138,37 @@ export function StudentEnrollForm() {
     resolver: zodResolver(enrollmentFormSchema),
   });
 
+  // Fetch schools on component mount
+  useEffect(() => {
+    async function fetchSchools() {
+      if (!userData?.details?.uni_id) return;
+      
+      try {
+        const { data, error } = await supabase
+          .from('school')
+          .select('id, name, uni_id')
+          .eq('uni_id', userData.details.uni_id);
+        
+        if (error) throw error;
+        setSchools(data || []);
+      } catch (error) {
+        toast({
+          title: "Error",
+          description: "Failed to fetch schools",
+          className: "bg-red-500 border-red-500 text-white",
+          duration: 2000,
+        });
+      }
+    }
+    fetchSchools();
+  }, [userData]);
+
   // Fetch degrees on component mount
   useEffect(() => {
     async function fetchDegrees() {
       try {
-        const { data, error } = await supabase
-          .from('degree')
-          .select('degree_id, degree_name, duration, department_id, school_id');
-        
-        if (error) throw error;
-        setDegrees(data || []);
+        // Initially load nothing - user must select a school first
+        setDegrees([]);
       } catch (error) {
         setError(error instanceof Error ? error.message : 'Failed to fetch degrees');
       } finally {
@@ -141,6 +177,35 @@ export function StudentEnrollForm() {
     }
     fetchDegrees();
   }, []);
+
+  // Filter courses by school_id when school is selected
+  const onSchoolChange = async (schoolId: number) => {
+    try {
+      form.setValue('school_id', schoolId);
+      
+      // Clear previous selections
+      form.unregister('degree_id');
+      setBatches([]);
+      setSections([]);
+      setStudents([]);
+      
+      // Fetch degrees based on school
+      const { data, error } = await supabase
+        .from('degree')
+        .select('degree_id, degree_name, duration, department_id, school_id')
+        .eq('school_id', schoolId);
+      
+      if (error) throw error;
+      setDegrees(data || []);
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to fetch degrees for selected school",
+        className: "bg-red-500 border-red-500 text-white",
+        duration: 2000,
+      });
+    }
+  };
 
   // Fetch batches when degree is selected
   const onDegreeChange = async (degreeId: number) => {
@@ -331,6 +396,43 @@ export function StudentEnrollForm() {
         <CardContent>
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+              {/* School Selection */}
+              <FormField
+                control={form.control}
+                name="school_id"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>School</FormLabel>
+                    <Select
+                      onValueChange={(value) => onSchoolChange(Number(value))}
+                    >
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select School" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {schools.length === 0 ? (
+                          <SelectItem value="empty" disabled>
+                            No schools available
+                          </SelectItem>
+                        ) : (
+                          schools.map((school) => (
+                            <SelectItem
+                              key={school.id}
+                              value={String(school.id)}
+                            >
+                              {school.name}
+                            </SelectItem>
+                          ))
+                        )}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
               {/* Degree Selection */}
               <FormField
                 control={form.control}
@@ -347,9 +449,13 @@ export function StudentEnrollForm() {
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {degrees.length === 0 ? (
+                        {!form.getValues('school_id') ? (
                           <SelectItem value="empty" disabled>
-                            No degrees available
+                            Please select a school first
+                          </SelectItem>
+                        ) : degrees.length === 0 ? (
+                          <SelectItem value="empty" disabled>
+                            No degrees available for this school
                           </SelectItem>
                         ) : (
                           degrees.map((degree) => (
