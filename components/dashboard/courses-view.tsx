@@ -4,36 +4,30 @@ import { useState, useEffect } from "react";
 import { CourseCard } from "@/components/dashboard/course-card";
 import { createClient } from "@/utils/supabase/client";
 import Loading from "@/components/ui/loading"; // Import the Loading component
+import { useSelector } from "react-redux";
+import { RootState } from "@/lib/store";
 
+// Define User type based on the Redux auth slice shape
 type User = {
   id: string;
-  email?: string;
-  user_metadata?: {
-    full_name?: string;
-    role?: string;
+  email: string;
+  role: string;
+  name: string;
+  lastSignIn: string;
+  createdAt: string;
+  details: {
+    uni_id: number;
+    user_id: number;
+    uni_name: string;
+    specialization: string;
   };
-};
+} | null;
 
 const CoursesView = () => {
   const [courseCardData, setCourseCardData] = useState<any[]>([]); // Track course card data
-  const [user, setUser] = useState<User | null>(null); // Track user state
+  const user = useSelector((state: RootState) => state.auth.user) as User; // Get user from Redux
   const [loading, setLoading] = useState(true); // Track loading state
   const supabase = createClient();
-
-  useEffect(() => {
-    const fetchUser = async () => {
-      setLoading(true);
-      const { data, error } = await supabase.auth.getUser();
-      if (error) {
-        console.error("Error fetching user:", error.message);
-        setLoading(false);
-        return;
-      }
-      setUser(data.user);
-    };
-
-    fetchUser();
-  }, []);
 
   useEffect(() => {
     const fetchCourseCardData = async () => {
@@ -44,8 +38,9 @@ const CoursesView = () => {
       }
 
       try {
-        if (user.user_metadata?.role === "student") {
+        if (user.role === "student") {
           // Fetch courses for student
+          console.log("Fetching courses for student");
           const { data: studentData } = await supabase
             .from("students")
             .select("student_id")
@@ -80,8 +75,9 @@ const CoursesView = () => {
               enrollmentsData.map((e) => e.course_id)
             );
           setCourseCardData(courseData || []);
-        } else if (user.user_metadata?.role === "instructor") {
+        } else if (user.role === "instructor") {
           // Fetch courses for instructor
+          console.log("Fetching courses for instructor");
           const { data: instructorData } = await supabase
             .from("instructors")
             .select("instructor_id")
