@@ -37,6 +37,19 @@ import { RootState } from "@/lib/store";
 type Batch = {
   batch_id: number;
   intake: string; // Year value
+  degree_id: number;
+};
+
+type School = {
+  id: number;
+  name: string;
+  uni_id: number;
+};
+
+type Degree = {
+  degree_id: number;
+  degree_name: string;
+  school_id: number;
 };
 
 type Section = {
@@ -57,6 +70,8 @@ type Instructor = {
 };
 
 const assignmentFormSchema = z.object({
+  schoolId: z.string().min(1, "School is required"),
+  degreeId: z.string().min(1, "Degree is required"),
   batchId: z.string().min(1, "Batch is required"),
   sectionId: z.string().min(1, "Section is required"),
   courseId: z.string().min(1, "Course is required"),
@@ -67,11 +82,17 @@ type AssignmentFormValues = z.infer<typeof assignmentFormSchema>;
 
 export function CourseAssignmentForm() {
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [schools, setSchools] = useState<School[]>([]);
+  const [degrees, setDegrees] = useState<Degree[]>([]);
+  const [filteredDegrees, setFilteredDegrees] = useState<Degree[]>([]);
   const [batches, setBatches] = useState<Batch[]>([]);
+  const [filteredBatches, setFilteredBatches] = useState<Batch[]>([]);
   const [sections, setSections] = useState<Section[]>([]);
   const [filteredSections, setFilteredSections] = useState<Section[]>([]);
   const [courses, setCourses] = useState<Course[]>([]);
   const [instructors, setInstructors] = useState<Instructor[]>([]);
+  const [selectedSchoolId, setSelectedSchoolId] = useState<string | null>(null);
+  const [selectedDegreeId, setSelectedDegreeId] = useState<string | null>(null);
   const [selectedBatchId, setSelectedBatchId] = useState<string | null>(null);
   const [selectedSectionId, setSelectedSectionId] = useState<string | null>(null);
   const router = useRouter();
@@ -82,6 +103,8 @@ export function CourseAssignmentForm() {
   const form = useForm<AssignmentFormValues>({
     resolver: zodResolver(assignmentFormSchema),
     defaultValues: {
+      schoolId: "",
+      degreeId: "",
       batchId: "",
       sectionId: "",
       courseId: "",
@@ -89,12 +112,96 @@ export function CourseAssignmentForm() {
     },
   });
 
-  // Fetch batches on component mount
+  // Fetch schools based on user's university
+  useEffect(() => {
+    const fetchSchools = async () => {
+      if (!userData?.details?.uni_id) return;
+      
+      try {
+        const { data, error } = await supabase
+          .from('school')
+          .select('id, name, uni_id')
+          .eq('uni_id', userData.details.uni_id);
+        
+        if (error) {
+          console.error("Error fetching schools:", error);
+          toast({
+            title: "Error",
+            description: "Failed to load schools",
+            className: "bg-red-500 border-red-500 text-white",
+            duration: 2000,
+          });
+          return;
+        }
+        
+        setSchools(data || []);
+      } catch (error: any) {
+        console.error("Error fetching schools:", error);
+        toast({
+          title: "Error",
+          description: error.message || "Failed to load schools",
+          className: "bg-red-500 border-red-500 text-white",
+          duration: 2000,
+        });
+      }
+    };
+
+    fetchSchools();
+  }, [userData, supabase, toast]);
+
+  // Fetch all degrees on component mount
+  useEffect(() => {
+    const fetchDegrees = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('degree')
+          .select('degree_id, degree_name, school_id')
+          .order('degree_name');
+        
+        if (error) {
+          console.error("Error fetching degrees:", error);
+          toast({
+            title: "Error",
+            description: "Failed to load degrees",
+            className: "bg-red-500 border-red-500 text-white",
+            duration: 2000,
+          });
+          return;
+        }
+        
+        setDegrees(data || []);
+      } catch (error: any) {
+        console.error("Error fetching degrees:", error);
+        toast({
+          title: "Error",
+          description: error.message || "Failed to load degrees",
+          className: "bg-red-500 border-red-500 text-white",
+          duration: 2000,
+        });
+      }
+    };
+
+    fetchDegrees();
+  }, [supabase, toast]);
+
+  // Filter degrees when school changes
+  useEffect(() => {
+    if (!selectedSchoolId) {
+      setFilteredDegrees([]);
+      return;
+    }
+
+    const schoolId = parseInt(selectedSchoolId);
+    const filtered = degrees.filter(degree => degree.school_id === schoolId);
+    setFilteredDegrees(filtered);
+  }, [selectedSchoolId, degrees]);
+
+  // Fetch all batches on component mount
   useEffect(() => {
     const fetchBatches = async () => {
       const { data, error } = await supabase
         .from("batch")
-        .select("batch_id, intake")
+        .select("batch_id, intake, degree_id")
         .order("intake", { ascending: false });
 
       if (error) {
@@ -113,6 +220,18 @@ export function CourseAssignmentForm() {
 
     fetchBatches();
   }, [supabase, toast]);
+
+  // Filter batches when degree changes
+  useEffect(() => {
+    if (!selectedDegreeId) {
+      setFilteredBatches([]);
+      return;
+    }
+
+    const degreeId = parseInt(selectedDegreeId);
+    const filtered = batches.filter(batch => batch.degree_id === degreeId);
+    setFilteredBatches(filtered);
+  }, [selectedDegreeId, batches]);
 
   // Fetch all sections on component mount
   useEffect(() => {
@@ -264,20 +383,43 @@ export function CourseAssignmentForm() {
     fetchCourses();
   }, [selectedSectionId, supabase, toast]);
 
+  // Handle school change
+  const handleSchoolChange = (schoolId: string) => {
+    setSelectedSchoolId(schoolId);
+    form.setValue("schoolId", schoolId);
+    
+    // Reset dependent fields
+    setSelectedDegreeId(null);
+    setSelectedBatchId(null);
+    setSelectedSectionId(null);
+    form.setValue("degreeId", "");
+    form.setValue("batchId", "");
+    form.setValue("sectionId", "");
+    form.setValue("courseId", "");
+  };
+
+  // Handle degree change
+  const handleDegreeChange = (degreeId: string) => {
+    setSelectedDegreeId(degreeId);
+    form.setValue("degreeId", degreeId);
+    
+    // Reset dependent fields
+    setSelectedBatchId(null);
+    setSelectedSectionId(null);
+    form.setValue("batchId", "");
+    form.setValue("sectionId", "");
+    form.setValue("courseId", "");
+  };
+
   // Handle batch change
   const handleBatchChange = (batchId: string) => {
     setSelectedBatchId(batchId);
     form.setValue("batchId", batchId);
-    form.setValue("sectionId", ""); // Reset section when batch changes
-    form.setValue("courseId", ""); // Reset course when batch changes
+    
+    // Reset dependent fields
     setSelectedSectionId(null);
-  };
-
-  // Handle section change
-  const handleSectionChange = (sectionId: string) => {
-    setSelectedSectionId(sectionId);
-    form.setValue("sectionId", sectionId);
-    form.setValue("courseId", ""); // Reset course when section changes
+    form.setValue("sectionId", "");
+    form.setValue("courseId", "");
   };
 
   const onSubmit = async (values: AssignmentFormValues) => {
@@ -340,9 +482,18 @@ export function CourseAssignmentForm() {
         duration: 2000,
       });
 
+      // Reset form and state variables
       form.reset();
+      // Reset all selection states
+      setSelectedSchoolId(null);
+      setSelectedDegreeId(null);
       setSelectedBatchId(null);
       setSelectedSectionId(null);
+      // Reset filtered data
+      setFilteredDegrees([]);
+      setFilteredBatches([]);
+      setFilteredSections([]);
+      setCourses([]);
     } catch (error: any) {
       console.error('Assignment error:', error);
       toast({
@@ -368,6 +519,86 @@ export function CourseAssignmentForm() {
         <CardContent>
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+              {/* School Selection */}
+              <FormField
+                control={form.control}
+                name="schoolId"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>School</FormLabel>
+                    <Select
+                      onValueChange={(value) => handleSchoolChange(value)}
+                      defaultValue={field.value}
+                    >
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select a school" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {schools.length === 0 ? (
+                          <SelectItem value="empty" disabled>
+                            No schools available
+                          </SelectItem>
+                        ) : (
+                          schools.map((school) => (
+                            <SelectItem
+                              key={school.id}
+                              value={school.id.toString()}
+                            >
+                              {school.name}
+                            </SelectItem>
+                          ))
+                        )}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              {/* Degree Selection */}
+              <FormField
+                control={form.control}
+                name="degreeId"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Degree Program</FormLabel>
+                    <Select
+                      onValueChange={(value) => handleDegreeChange(value)}
+                      defaultValue={field.value}
+                      disabled={!selectedSchoolId}
+                    >
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder={selectedSchoolId ? "Select a degree" : "First select a school"} />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {filteredDegrees.length === 0 ? (
+                          <SelectItem value="empty" disabled>
+                            {selectedSchoolId 
+                              ? "No degrees available for this school" 
+                              : "Please select a school first"}
+                          </SelectItem>
+                        ) : (
+                          filteredDegrees.map((degree) => (
+                            <SelectItem
+                              key={degree.degree_id}
+                              value={degree.degree_id.toString()}
+                            >
+                              {degree.degree_name}
+                            </SelectItem>
+                          ))
+                        )}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              {/* Batch Selection - Update to use filteredBatches */}
               <FormField
                 control={form.control}
                 name="batchId"
@@ -377,21 +608,30 @@ export function CourseAssignmentForm() {
                     <Select
                       onValueChange={(value) => handleBatchChange(value)}
                       defaultValue={field.value}
+                      disabled={!selectedDegreeId}
                     >
                       <FormControl>
                         <SelectTrigger>
-                          <SelectValue placeholder="Select a batch" />
+                          <SelectValue placeholder={selectedDegreeId ? "Select a batch" : "First select a degree"} />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {batches.map((batch) => (
-                          <SelectItem
-                            key={batch.batch_id}
-                            value={batch.batch_id.toString()}
-                          >
-                            {batch.intake}
+                        {filteredBatches.length === 0 ? (
+                          <SelectItem value="empty" disabled>
+                            {selectedDegreeId 
+                              ? "No batches available for this degree" 
+                              : "Please select a degree first"}
                           </SelectItem>
-                        ))}
+                        ) : (
+                          filteredBatches.map((batch) => (
+                            <SelectItem
+                              key={batch.batch_id}
+                              value={batch.batch_id.toString()}
+                            >
+                              {batch.intake}
+                            </SelectItem>
+                          ))
+                        )}
                       </SelectContent>
                     </Select>
                     <FormMessage />
@@ -406,7 +646,11 @@ export function CourseAssignmentForm() {
                   <FormItem>
                     <FormLabel>Section</FormLabel>
                     <Select
-                      onValueChange={(value) => handleSectionChange(value)}
+                      onValueChange={(value) => {
+                        field.onChange(value);
+                        setSelectedSectionId(value);
+                        form.setValue("courseId", ""); // Reset course when section changes
+                      }}
                       defaultValue={field.value}
                       disabled={!selectedBatchId}
                     >
@@ -448,14 +692,22 @@ export function CourseAssignmentForm() {
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {courses.map((course) => (
-                          <SelectItem
-                            key={course.course_id}
-                            value={course.course_id.toString()}
-                          >
-                            {course.title}
+                        {courses.length === 0 ? (
+                          <SelectItem value="empty" disabled>
+                            {selectedSectionId 
+                              ? "No courses available for this section" 
+                              : "Please select a section first"}
                           </SelectItem>
-                        ))}
+                        ) : (
+                          courses.map((course) => (
+                            <SelectItem
+                              key={course.course_id}
+                              value={course.course_id.toString()}
+                            >
+                              {course.title}
+                            </SelectItem>
+                          ))
+                        )}
                       </SelectContent>
                     </Select>
                     <FormMessage />
