@@ -42,7 +42,7 @@ export function CourseCard({ courseCardData } : any) {
               <CardDescription className="text-sm text-muted-foreground text-left px-6 py-2">
                 {course.faculty_id
                   ? `Faculty ID: ${course.faculty_id}`
-                  : "Unknown Faculty"}
+                  : "Dr. John Doe"}
               </CardDescription>
               <CardContent className="border-t border-muted p-4 pt-2">
                 <p className="text-sm text-muted-foreground">
