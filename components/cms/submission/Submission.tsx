@@ -18,7 +18,8 @@ interface Assignment {
 
 const Submission = () => {
   const params = useParams();
-  const courseId = parseInt(params.course_id as string);
+  // The course_id in the URL is actually the course_instructor_id
+  const courseInstructorId = parseInt(params.course_id as string);
   const [assignments, setAssignments] = useState<Assignment[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -27,14 +28,14 @@ const Submission = () => {
   useEffect(() => {
     const fetchAssignments = async () => {
       try {
-        if (isNaN(courseId)) {
-          throw new Error('Invalid course ID');
+        if (isNaN(courseInstructorId)) {
+          throw new Error('Invalid course instructor ID');
         }
 
         const { data, error } = await supabase
           .from('assignments')
           .select('*')
-          .eq('course_id', courseId);
+          .eq('course_instructor_id', courseInstructorId);
 
         if (error) {
           throw error;
@@ -56,7 +57,7 @@ const Submission = () => {
     };
 
     fetchAssignments();
-  }, [courseId]);
+  }, [courseInstructorId]);
 
   if (isLoading) {
     return (
@@ -84,7 +85,7 @@ const Submission = () => {
         <div className="grid gap-4">
           {assignments.map((assignment) => (
             <Link 
-              href={`/cms/${courseId}/submission/${assignment.assignment_id}`}
+              href={`/cms/${courseInstructorId}/submission/${assignment.assignment_id}`}
               key={assignment.assignment_id}
             >
               <motion.div

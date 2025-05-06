@@ -13,7 +13,7 @@ const AttendanceDetails = () => {
   const [loading, setLoading] = useState(true);
   const supabase = createClient();
   const user = useSelector((state: RootState) => state.auth.user);
-  const course_id = window.location.pathname.split("/")[2];
+  const courseInstructorId = window.location.pathname.split("/")[2];
   const [course, setCourse] = useState<any>();
   const [presentCount, setPresentCount] = useState(0);
   const [absentCount, setAbsentCount] = useState(0);
@@ -41,12 +41,12 @@ const AttendanceDetails = () => {
 
         setStudentId(studentData.student_id);
 
-        // Fetch attendance using student_id
+        // Fetch attendance using student_id and course_instructor_id
         const { data: attendance, error: attendanceError } = await supabase
           .from("attendances")
           .select("*")
           .eq("student_id", studentData.student_id)
-          .eq("course_id", course_id);
+          .eq("course_instructor_id", courseInstructorId);
 
         if (attendanceError) {
           console.error("Error fetching attendance:", attendanceError);
@@ -70,28 +70,31 @@ const AttendanceDetails = () => {
   useEffect(() => {
     const fetchCourse = async () => {
       try {
-        const { data: courseData, error: courseError } = await supabase
-          .from("courses")
-          .select("*")
-          .eq("course_id", course_id)
+        // Fetch course details via course_instructor join
+        const { data: ciData, error: ciError } = await supabase
+          .from("course_instructor")
+          .select(`course_info, courses(course_id, title, course_code, description)`)  
+          .eq("id", courseInstructorId)
           .single();
 
-        if (courseError || !courseData) {
-          console.error("Error fetching course:", courseError);
+        if (ciError || !ciData) {
+          console.error("Error fetching course:data:", ciError);
           return;
         }
 
-        console.log("Course data:", courseData);
+        console.log("CourseInstructor record:", ciData);
 
-        setCourse(courseData);
+        setCourse({
+          ...ciData.courses,
+          ...ciData.course_info
+        });
       } catch (error) {
         console.error("Unexpected error:", error);
       }
     };
   
     fetchCourse();
-  }
-  , [course_id]);
+  }, [courseInstructorId]);
 
   useEffect(() => {
     console.log("Updated attendanceData:", attendanceData);

@@ -9,7 +9,7 @@ import Loading from "@/components/ui/loading";
 
 interface ContentPageProps {
   params: {
-    course_id: string;
+    course_id: string; // This is now course_instructor_id
   };
 }
 
@@ -20,6 +20,9 @@ const ContentPage = ({ params }: ContentPageProps) => {
   
   // Check if user is instructor directly from Redux state
   const isInstructor = user?.role === 'instructor';
+
+  // The course_id in the URL is actually the course_instructor_id
+  const courseInstructorId = params.course_id;
 
   if (isLoading) {
     return (
@@ -32,9 +35,9 @@ const ContentPage = ({ params }: ContentPageProps) => {
   return (
     <div className="p-6">
       {isInstructor && (
-        <TeacherUpload courseId={parseInt(params.course_id)} />
+        <TeacherUpload courseInstructorId={parseInt(courseInstructorId)} />
       )}
-      <Content course_id={params.course_id} />
+      <Content courseInstructorId={courseInstructorId} />
     </div>
   );
 };

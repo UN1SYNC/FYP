@@ -10,10 +10,10 @@ import { useToast } from "@/hooks/use-toast";
 import Loading from "@/components/ui/loading";
 
 interface TeacherUploadProps {
-  courseId: number;
+  courseInstructorId: number;
 }
 
-export function TeacherUpload({ courseId }: TeacherUploadProps) {
+export function TeacherUpload({ courseInstructorId }: TeacherUploadProps) {
   const [title, setTitle] = useState("");
   const [weekNo, setWeekNo] = useState<number>(1);
   const [isUploading, setIsUploading] = useState(false);
@@ -59,7 +59,7 @@ export function TeacherUpload({ courseId }: TeacherUploadProps) {
       const { data, error } = await supabase
         .from('course_content')
         .insert({
-          course_id: courseId,
+          course_instructor_id: courseInstructorId,
           week_no: weekNo,
           topic_name: title,
           path: filePaths,

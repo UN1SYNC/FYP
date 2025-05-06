@@ -17,8 +17,8 @@ const MarkAttendancePage = () => {
   const supabase = createClient();
   const user = useSelector((state: RootState) => state.auth.user);
 
-  // Get course_id from URL (adjust if using Next.js routing parameters)
-  const course_id = window.location.pathname.split("/")[2];
+  // The URL param is now course_instructor_id
+  const courseInstructorId = window.location.pathname.split("/")[2];
 
   // Get today's date and current time.
   const today = new Date().toISOString().split("T")[0];
@@ -30,16 +30,15 @@ const MarkAttendancePage = () => {
   useEffect(() => {
     const fetchSessionAndStudents = async () => {
       if (!user || !user.details) return;
-      const teacher_id = user.details.user_id || ""; // Add null check with default value
+      const teacher_id = user.details.user_id || "";
 
       // 1. Try to fetch an active class session for today.
       let { data: sessionData, error: sessionError } = await supabase
         .from("class_sessions")
         .select("*")
-        .eq("course_id", course_id)
+        .eq("course_instructor_id", courseInstructorId)
         .eq("teacher_id", teacher_id)
         .eq("session_date", today)
-        // Ensure currentTime falls between start_time and end_time.
         .lte("start_time", currentTime)
         .gte("end_time", currentTime);
 
@@ -54,7 +53,7 @@ const MarkAttendancePage = () => {
         const { data: recurringData, error: recurringError } = await supabase
           .from("recurring_sessions")
           .select("*")
-          .eq("course_id", course_id)
+          .eq("course_instructor_id", courseInstructorId)
           .eq("teacher_id", teacher_id)
           .eq("day_of_week", todayDayIndex);
 
@@ -78,7 +77,7 @@ const MarkAttendancePage = () => {
             const { data: newSession, error: newSessionError } = await supabase
               .from("class_sessions")
               .insert({
-                course_id,
+                course_instructor_id: courseInstructorId,
                 teacher_id: teacher_id,
                 session_date: today,
                 start_time: recurringSession.start_time,
@@ -109,13 +108,22 @@ const MarkAttendancePage = () => {
       }
 
       // 2. Fetch enrolled students for the course.
-      // We are joining with the users table to get each student's name.
+      // Fetch the section_id for this course assignment
+      const { data: ciRecord, error: ciError } = await supabase
+        .from("course_instructor")
+        .select("section_id")
+        .eq("id", courseInstructorId)
+        .single();
+      if (ciError || !ciRecord) {
+        console.error("Error fetching course-instructor record:", ciError);
+        setLoading(false);
+        return;
+      }
+      const sectionId = ciRecord.section_id;
+
       const { data: studentData, error: studentError } = await supabase
         .from("students")
-        .select(`
-          *,
-          user:users (name)
-        `);
+        .select(`*, user:users(name)`).eq("section_id", sectionId);
 
       if (studentError) {
         console.error("Error fetching students:", studentError);
@@ -131,7 +139,7 @@ const MarkAttendancePage = () => {
     };
 
     fetchSessionAndStudents();
-  }, [user, course_id, today, currentTime, todayDayIndex, supabase]);
+  }, [user, /*course_id,*/ today, currentTime, todayDayIndex, supabase]);
 
   // Fetch existing attendance records for the active session.
   useEffect(() => {
@@ -163,9 +171,9 @@ const MarkAttendancePage = () => {
   useEffect(() => {
     const fetchPreviousSessions = async () => {
       if (!user || !user.details) return;
-      const teacher_id = user.details.user_id || ""; // Add null check with default value
+      const teacher_id = user.details.user_id || "";
       const now = new Date();
-      const day = now.getDay(); // 0 for Sunday
+      const day = now.getDay();
       const weekStart = new Date(now.getFullYear(), now.getMonth(), now.getDate() - day);
       const weekStartStr = weekStart.toISOString().split("T")[0];
 
@@ -173,7 +181,7 @@ const MarkAttendancePage = () => {
         .from("class_sessions")
         // Include join to fetch attendance for summary
         .select("*, attendances(*)")
-        .eq("course_id", course_id)
+        .eq("course_instructor_id", courseInstructorId)
         .eq("teacher_id", teacher_id)
         .gte("session_date", weekStartStr)
         .lt("session_date", today); // previous sessions only
@@ -187,7 +195,7 @@ const MarkAttendancePage = () => {
     };
 
     fetchPreviousSessions();
-  }, [user, course_id, today, supabase]);
+  }, [user, /*course_id,*/ today, supabase]);
 
   const handleAttendanceChange = (studentId: string, status: string) => {
     setAttendance((prev) => ({ ...prev, [studentId]: status }));
@@ -209,7 +217,7 @@ const MarkAttendancePage = () => {
       .map((student) => ({
         session_id: session.session_id,
         student_id: student.student_id,
-        course_id: course_id,
+        course_instructor_id: courseInstructorId,
         status: attendance[student.student_id] || "absent",
         date: today,
       }));

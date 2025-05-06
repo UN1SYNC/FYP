@@ -71,13 +71,14 @@ interface Student {
 // Add interface for Enrollment
 interface Enrollment {
   student_id: number;
-  course_id: number;
+  course_instructor_id: number;
   status: 'pending' | 'approved' | 'completed';
 }
 
 // Update the Course interface to make optional fields nullable
 interface Course {
   course_id: number;
+  course_instructor_id: number;
   title: string;
   course_code: string;
   description?: string | null;
@@ -109,7 +110,7 @@ const enrollmentFormSchema = z.object({
   section_id: z.number({
     required_error: "Section is required",
   }),
-  course_id: z.number({
+  course_instructor_id: z.number({
     required_error: "Course is required",
   }),
 });
@@ -283,13 +284,19 @@ export function StudentEnrollForm() {
     async function fetchCourses() {
       try {
         const { data, error } = await supabase
-          .from('courses')
-          .select('course_id, title, course_code, description, prerequisite, no_weeks, school_id, created_at, updated_at');
-        
+          .from('course_instructor')
+          .select('id as course_instructor_id, course_id, course_info ->> title as title, course_info ->> description as description, courses: courses ( course_code )')
+          .eq('section_id', form.getValues('section_id')); // Only fetch for the selected section
+
         if (error) throw error;
 
-        // Type assertion to ensure data matches Course interface
-        const coursesData = (data || []) as Course[];
+        // Map to match Course interface
+        const coursesData = (data || []).map((ci: any) => ({
+          course_id: ci.course_id,
+          course_instructor_id: ci.course_instructor_id,
+          title: ci.title,
+          course_code: ci.courses.course_code,
+        }));
         setCourses(coursesData);
       } catch (error) {
         toast({
@@ -301,7 +308,7 @@ export function StudentEnrollForm() {
       }
     }
     fetchCourses();
-  }, []);
+  }, [form.getValues('section_id')]);
 
   // Handle select all checkbox
   const handleSelectAll = (checked: boolean) => {
@@ -335,7 +342,7 @@ export function StudentEnrollForm() {
       // Create enrollment records for selected students
       const enrollments = selectedStudents.map(student => ({
         student_id: student.student_id,
-        course_id: values.course_id,
+        course_instructor_id: values.course_instructor_id,
         status: 'pending'
       }));
 
@@ -551,12 +558,12 @@ export function StudentEnrollForm() {
               {/* Course Selection */}
               <FormField
                 control={form.control}
-                name="course_id"
+                name="course_instructor_id"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Course</FormLabel>
                     <Select
-                      onValueChange={(value) => form.setValue('course_id', Number(value))}
+                      onValueChange={(value) => form.setValue('course_instructor_id', Number(value))}
                     >
                       <FormControl>
                         <SelectTrigger>
@@ -572,7 +579,7 @@ export function StudentEnrollForm() {
                           courses.map((course) => (
                             <SelectItem
                               key={course.course_id}
-                              value={String(course.course_id)}
+                              value={String(course.course_instructor_id)}
                             >
                               {course.course_code} - {course.title}
                             </SelectItem>
@@ -624,7 +631,7 @@ export function StudentEnrollForm() {
               <Button
                 type="submit"
                 className="w-full"
-                disabled={isSubmitting || !form.getValues('course_id')}
+                disabled={isSubmitting || !form.getValues('course_instructor_id')}
               >
                 {isSubmitting ? "Enrolling..." : "Enroll Selected Students"}
               </Button>

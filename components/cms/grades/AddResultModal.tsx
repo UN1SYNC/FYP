@@ -14,14 +14,14 @@ interface AddResultModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSaveSuccess: () => void;
-  courseId: string;
+  courseInstructorId: string;
 }
 
 export const AddResultModal = ({ 
   open, 
   onOpenChange,
   onSaveSuccess,
-  courseId 
+  courseInstructorId 
 }: AddResultModalProps) => {
   const supabase = createClient();
   const [loading, setLoading] = useState(true);
@@ -33,16 +33,55 @@ export const AddResultModal = ({
 
   const fetchStudents = async () => {
     setLoading(true);
-    const { data, error } = await supabase.rpc('get_course_enrolled_students', {
-      p_course_id: courseId
-    });
+    try {
+      // Get course_id from course_instructor table
+      const { data: courseInstructorData, error: courseInstructorError } = await supabase
+        .from('course_instructor')
+        .select('course_id')
+        .eq('id', courseInstructorId)
+        .single();
+      
+      if (courseInstructorError) {
+        console.error('Error fetching course instructor data:', courseInstructorError);
+        setLoading(false);
+        return;
+      }
+      
+      // Get enrolled students for this course
+      const { data: enrolledStudents, error: enrollmentError } = await supabase
+        .from('enrollments')
+        .select(`
+          student_id,
+          students (
+            student_id,
+            user_id,
+            users (
+              name
+            )
+          )
+        `)
+        .eq('course_id', courseInstructorData.course_id);
+        
+      if (enrollmentError) {
+        console.error('Error fetching enrolled students:', enrollmentError);
+        setLoading(false);
+        return;
+      }
 
-    if (error) {
-      console.error('Error fetching students:', error);
-    } else {
-      setStudents(data || []);
+      // Format student data
+      const formattedStudents = (enrolledStudents || []).map(enrollment => {
+        const studentRow = Array.isArray(enrollment.students) ? enrollment.students[0] : null;
+        const userRow = studentRow && Array.isArray(studentRow.users) ? studentRow.users[0] : null;
+        const studentName = userRow?.name || '';
+        return { id: enrollment.student_id, name: studentName };
+      });
+      
+      setStudents(formattedStudents);
+    } catch (error) {
+      console.error('Error in fetchStudents:', error);
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   useEffect(() => {
@@ -68,28 +107,41 @@ export const AddResultModal = ({
 
   const handleSave = async () => {
     try {
-      const {data: assessmentData, error: assessmentError} = await supabase.rpc('insert_assessment', {
-        p_course_id: courseId,
-        p_title: title,
-        p_total_marks: totalMarks,
-        p_type: type.toLowerCase(),
-      });
+      // Insert the assessment
+      const { data: assessmentData, error: assessmentError } = await supabase
+        .from('assessment')
+        .insert({
+          title: title,
+          total_marks: totalMarks,
+          type: type.toLowerCase(),
+          course_instructor_id: courseInstructorId
+        })
+        .select()
+        .single();
 
       if (assessmentError) {
         console.error("Error creating assessment:", assessmentError);
         return;
       }
 
-      const {data: assessmentResultData, error: assessmentResultError} = await supabase.rpc('insert_assessment_grades', {
-        p_assessment_id: assessmentData,
-        p_student_grades: studentMarks
-      });
+      // Insert grades for each student
+      const gradesData = Object.entries(studentMarks).map(([studentId, grade]) => ({
+        assessment_id: assessmentData.assessment_id,
+        student_id: parseInt(studentId),
+        grade: grade,
+        total_grades: totalMarks
+      }));
 
-      if (assessmentResultError) {
-        console.error("Error creating assessment results:", assessmentResultError);
+      const { error: gradesError } = await supabase
+        .from('assessment_grades')
+        .insert(gradesData);
+
+      if (gradesError) {
+        console.error("Error creating assessment grades:", gradesError);
         return;
       }
 
+      // Success - close modal and refresh data
       onOpenChange(false);
       onSaveSuccess();
     } catch (error) {

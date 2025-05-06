@@ -23,6 +23,15 @@ type User = {
   };
 } | null;
 
+// Define the CourseInstructor type
+interface CourseInstructor {
+  id: number; // This is the course_instructor_id
+  course_id: number;
+  instructor_id: number;
+  section_id: number;
+  course_info: any;
+}
+
 const CoursesView = () => {
   const [courseCardData, setCourseCardData] = useState<any[]>([]); // Track course card data
   const user = useSelector((state: RootState) => state.auth.user) as User; // Get user from Redux
@@ -55,9 +64,10 @@ const CoursesView = () => {
 
           const studentId = studentData[0].student_id;
 
+          // Get enrollments with course_instructor_id instead of just course_id
           const { data: enrollmentsData } = await supabase
             .from("enrollments")
-            .select("course_id")
+            .select("course_instructor_id")
             .eq("student_id", studentId);
 
           if (!enrollmentsData || enrollmentsData.length === 0) {
@@ -67,14 +77,36 @@ const CoursesView = () => {
             return;
           }
 
-          const { data: courseData } = await supabase
-            .from("courses")
-            .select("*")
+          // Get course instructor data
+          const { data: courseInstructorData, error: ciError } = await supabase
+            .from("course_instructor")
+            .select(
+              "id, course_id, instructor_id, section_id, course_info, courses(course_id, title, description)"
+            )
             .in(
-              "course_id",
-              enrollmentsData.map((e) => e.course_id)
+              "id",
+              enrollmentsData.map((e) => e.course_instructor_id)
             );
-          setCourseCardData(courseData || []);
+          console.log("EnrollmentsData:", enrollmentsData);
+          console.log("Fetched courseInstructorData:", courseInstructorData, "| Error:", ciError);
+
+          if (ciError || !courseInstructorData || courseInstructorData.length === 0) {
+            setCourseCardData([]);
+            setLoading(false);
+            return;
+          }
+
+          // Transform the data to include both course info and course_instructor_id
+          const transformedData = courseInstructorData.map(ci => ({
+            ...ci.courses,
+            course_instructor_id: ci.id,
+            instructor_id: ci.instructor_id,
+            section_id: ci.section_id,
+            course_info: ci.course_info
+          }));
+          console.log("TransformedData for course cards:", transformedData);
+          
+          setCourseCardData(transformedData);
         } else if (user.role === "instructor") {
           // Fetch courses for instructor
           console.log("Fetching courses for instructor");
@@ -92,9 +124,17 @@ const CoursesView = () => {
 
           const instructorId = instructorData[0].instructor_id;
 
+          // Get course instructor data directly with course details joined
           const { data: courseInstructorData } = await supabase
             .from("course_instructor")
-            .select("course_id")
+            .select(`
+              id,
+              course_id,
+              instructor_id,
+              section_id,
+              course_info,
+              courses(*)
+            `)
             .eq("instructor_id", instructorId);
 
           if (!courseInstructorData || courseInstructorData.length === 0) {
@@ -104,14 +144,16 @@ const CoursesView = () => {
             return;
           }
 
-          const { data: courseData } = await supabase
-            .from("courses")
-            .select("*")
-            .in(
-              "course_id",
-              courseInstructorData.map((ci) => ci.course_id)
-            );
-          setCourseCardData(courseData || []);
+          // Transform the data to include both course info and course_instructor_id
+          const transformedData = courseInstructorData.map(ci => ({
+            ...ci.courses,
+            course_instructor_id: ci.id,
+            instructor_id: ci.instructor_id,
+            section_id: ci.section_id,
+            course_info: ci.course_info
+          }));
+          
+          setCourseCardData(transformedData);
         }
       } catch (error) {
         console.error("Error fetching course data:", error);

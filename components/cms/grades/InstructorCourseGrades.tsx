@@ -19,22 +19,14 @@ export const InstructorCourseGrades = ({ instructorData }: InstructorDataProps) 
   const [openAssessments, setOpenAssessments] = useState<{ [key: string]: boolean }>({});
   const [editingAssessment, setEditingAssessment] = useState<AssessmentData | null>(null);
   const [addModalOpen, setAddModalOpen] = useState(false);
-  const courseId = window.location.pathname.split("/")[2];
+  const courseInstructorId = window.location.pathname.split("/")[2];
   const supabase = createClient();
   
   // Add refresh function
   const refreshData = async () => {
-    const { data: refreshedData, error } = await supabase.rpc('get_all_course_assessments_data', {
-      p_course_id: window.location.pathname.split("/")[2]
-    });
-    
-    if (error) {
-      console.error('Error refreshing data:', error);
-      return;
-    }
-    
-    // Update the instructorData state in the parent component
-    window.location.reload(); // Temporary solution - ideally use state management
+    // Instead of using window.location.reload(), we'll fetch fresh data
+    // Since the parent component (page.tsx) handles the fetching, we'll reload the page
+    window.location.reload();
   };
 
   if (!instructorData || Object.keys(instructorData).length === 0) {
@@ -152,7 +144,7 @@ export const InstructorCourseGrades = ({ instructorData }: InstructorDataProps) 
         open={addModalOpen}
         onOpenChange={setAddModalOpen}
         onSaveSuccess={refreshData}
-        courseId={courseId}
+        courseInstructorId={courseInstructorId}
       />
     </div>
   );
