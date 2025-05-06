@@ -5,7 +5,7 @@ import WeeksList from "./WeeksList";
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import { Week } from "./types";
 
-export default function Content({ course_id }: { course_id: string }) {
+export default function Content({ courseInstructorId }: { courseInstructorId: string }) {
   const [courseInfo, setCourseInfo] = useState<{ weeks: Week[] }>({
     weeks: []
   });
@@ -16,7 +16,7 @@ export default function Content({ course_id }: { course_id: string }) {
       const { data, error } = await supabase
         .from('course_content')
         .select('*')
-        .eq('course_id', course_id)
+        .eq('course_instructor_id', courseInstructorId)
         .order('week_no');
 
       if (error) {
@@ -53,7 +53,7 @@ export default function Content({ course_id }: { course_id: string }) {
     };
 
     fetchCourseData();
-  }, [course_id]);
+  }, [courseInstructorId]);
 
   return (
     <div className="p-6 bg-white rounded-lg shadow-md">

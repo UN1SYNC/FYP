@@ -30,7 +30,7 @@ export const GradeEditModal = ({
   onSaveSuccess 
 }: GradeEditModalProps) => {
   const supabase = createClient();
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   // Track changed student marks
   const [changedRecords, setChangedRecords] = useState<Record<string, number>>({});
   
@@ -44,18 +44,25 @@ export const GradeEditModal = ({
   
   // Handle save button click
   const handleSave = async () => {
+    if (Object.keys(changedRecords).length === 0) {
+      onOpenChange(false);
+      return;
+    }
+    
+    setLoading(true);
     try {
-      const { data: assessmentData, error: assessmentError } = await supabase.rpc('update_student_grades', {
-        p_assessment_id: assessment.assessment_id,
-        p_student_grades: changedRecords
-      });
-
-      if (assessmentError) {
-        console.error("Error updating assessment marks:", assessmentError);
-        return;
+      // Update each student's grade individually
+      for (const [studentId, grade] of Object.entries(changedRecords)) {
+        const { error } = await supabase
+          .from('assessment_grades')
+          .update({ grade })
+          .eq('assessment_id', assessment.assessment_id)
+          .eq('student_id', studentId);
+          
+        if (error) {
+          console.error(`Error updating grade for student ${studentId}:`, error);
+        }
       }
-
-      console.log("Assessment marks updated successfully:", assessmentData);
       
       // Close the modal
       onOpenChange(false);
@@ -65,6 +72,8 @@ export const GradeEditModal = ({
       
     } catch (error) {
       console.error("Error saving grades:", error);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -107,7 +116,9 @@ export const GradeEditModal = ({
               })}
             </TableBody>
           </Table>
-          <Button className="mt-4" onClick={handleSave}>Save</Button>
+          <Button className="mt-4" onClick={handleSave} disabled={loading}>
+            {loading ? "Saving..." : "Save"}
+          </Button>
         </div>
       </DialogContent>
     </Dialog>

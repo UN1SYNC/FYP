@@ -13,9 +13,10 @@ export function CourseCard({ courseCardData } : any) {
   const user = useSelector((state: RootState) => state.auth.user); // Access Redux user state
   const router = useRouter();
 
-  const handleCourseClick = (courseSlug: string) => {
+  const handleCourseClick = (courseInstructorId: number) => {
     setLoading(true); 
-    router.push(`/cms/${courseSlug}`);
+    // Use course_instructor_id instead of course_id for navigation
+    router.push(`/cms/${courseInstructorId}`);
   };
 
   return (
@@ -26,13 +27,14 @@ export function CourseCard({ courseCardData } : any) {
         </div>
       ) : (
         courseCardData.map((course:any , index:any) => {
-          const courseSlug = course.course_id
+          // Use course_instructor_id for navigation
+          const courseInstructorId = course.course_instructor_id;
 
           return (
             <Card
               key={index}
               className="w-full h-40 hover:shadow-md hover:shadow-black cursor-pointer"
-              onClick={() => handleCourseClick(courseSlug)}
+              onClick={() => handleCourseClick(courseInstructorId)}
             >
               <CardHeader className="bg-primary text-primary-foreground rounded-t-xl px-6 py-4">
                 <CardTitle className="text-lg font-semibold">
@@ -40,9 +42,10 @@ export function CourseCard({ courseCardData } : any) {
                 </CardTitle>
               </CardHeader>
               <CardDescription className="text-sm text-muted-foreground text-left px-6 py-2">
-                {course.faculty_id
-                  ? `Faculty ID: ${course.faculty_id}`
-                  : "Unknown Faculty"}
+                {course.instructor_id 
+                  ? `Instructor ID: ${course.instructor_id}`
+                  : "Unknown Instructor"}
+                {course.section_id && ` • Section ID: ${course.section_id}`}
               </CardDescription>
               <CardContent className="border-t border-muted p-4 pt-2">
                 <p className="text-sm text-muted-foreground">

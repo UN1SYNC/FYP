@@ -3,9 +3,11 @@ import { Button } from "@/components/ui/button";
 import { createClient } from "@/utils/supabase/server";
 
 const CourseDashboard = async ({ params }:any ) => {
-  const {course_id} = params;
+  // Now course_id param actually contains the course_instructor_id
+  const courseInstructorId = params.course_id;
   const supabase = await createClient();
 
+  // Query course_instructor table using its primary key (id)
   const { data: courseData, error } = await supabase
   .from('course_instructor')
   .select(`
@@ -13,19 +15,21 @@ const CourseDashboard = async ({ params }:any ) => {
     instructors:instructors (
       *,
       user:users ( name )
-    )
+    ),
+    courses:courses (*)
   `)
-  .eq('course_id', course_id);
+  .eq('id', courseInstructorId)
+  .single();
 
   if (error) {
     console.error("Error fetching course data: ", error);
     return
   }
 
-  console.log("CourseData: ",courseData);
+  console.log("CourseData: ", courseData);
 
-  // Check if courseData exists and has items
-  if (!courseData || courseData.length === 0) {
+  // Check if courseData exists 
+  if (!courseData) {
     return (
       <div className="p-6 bg-gray-100 min-h-screen">
         <div className="bg-white p-6 rounded shadow">
@@ -41,20 +45,25 @@ const CourseDashboard = async ({ params }:any ) => {
   }
 
   // Safely access the instructor name with optional chaining
-  const instructorName = courseData[0]?.instructors?.user?.name || "Unknown Instructor";
+  const instructorName = courseData?.instructors?.user?.name || "Unknown Instructor";
 
-  const courseInfo = courseData[0]?.course_info || {};
+  // Get course info from course_info field or from the courses relation
+  const courseInfo = courseData?.course_info || {};
+  const courseDetails = courseData?.courses || {};
 
   return (
     <div className="p-6 bg-gray-100 min-h-screen">
       {/* Header Section */}
       <div className="bg-white p-6 rounded shadow">
         <h1 className="text-xl font-bold text-gray-800">
-          {courseInfo.title || "Untitled Course"}
+          {courseDetails.title || courseInfo.title || "Untitled Course"}
           <span className="block text-sm font-normal text-gray-600">
-            ({courseInfo.description || "No description available"})
+            ({courseDetails.description || courseInfo.description || "No description available"})
           </span>
         </h1>
+        <p className="text-sm text-gray-600 mt-2">
+          Instructor: {instructorName}
+        </p>
 
         <div className="mt-4 p-4 bg-orange-100 text-orange-700 text-sm rounded border border-orange-200">
           Note: The video files will be retained in LMS courses till end of the semester.
@@ -64,7 +73,7 @@ const CourseDashboard = async ({ params }:any ) => {
       {/* Course Description */}
       <div className="my-6">
         <h2 className="text-xl font-semibold">Course Description</h2>
-        <p className="text-gray-700 mt-2">{courseInfo.description || "No description available"}</p>
+        <p className="text-gray-700 mt-2">{courseDetails.description || courseInfo.description || "No description available"}</p>
       </div>
 
       {/* Learning Objectives */}
