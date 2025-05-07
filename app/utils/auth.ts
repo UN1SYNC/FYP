@@ -55,6 +55,8 @@ export const login = async (
       .from("modules")
       .select("*")
       .eq("university_id", user_details.university_id);
+
+      console.log("modulesData",modulesData)
   
     if (modulesData && modulesData.length > 0) {
       const modules = modulesData[0]
@@ -74,9 +76,38 @@ export const login = async (
         }));
         router.push("/onboarding");
         return;
+      } else {
+        toast({
+          title:"Login Successful",
+          description:"Redirecting to admin page",
+          className:"bg-green-500 border-green-500 text-white",
+          duration: 1000
+        });
+        dispatch(loginAction({
+          data: {
+            user: user_details,
+          },
+        }));
+        router.push("/admin");
+        return;
       }
     }
   } 
+  if (user_details?.role === "admin") {
+    toast({
+      title:"Login Successful",
+      description:"Redirecting to admin page",
+      className:"bg-green-500 border-green-500 text-white",
+      duration: 1000
+    });
+    dispatch(loginAction({
+      data: {
+        user: user_details,
+      },
+    }));
+    router.push("/admin");
+    return;
+  }
   // else {
   //   // if the user university id has all modules as false, then redirect to error page
   //   const { data:modulesData, error:modulesError } = await supabase.from("modules").select("*").eq("university_id", user_details.data.user.university_id);

@@ -72,20 +72,21 @@ const CMSModuleConfigure = () => {
     const userData = await supabase.auth.getUser();
     const userId = userData?.data?.user?.id;
     console.log(typeof userId);
-    if (userData?.data?.user?.role === "authenticated") {
-      const { data, error } = await supabase
-        .from("admins")
-        .select("*")
-        .eq("user_id", userId);
+    if (userData?.data?.user?.user_metadata?.role === "super-admin") {
+      console.log(userData);
+      // const { data, error } = await supabase
+      //   .from("admins")
+      //   .select("*")
+      //   .eq("user_id", userId);
 
-      if (!data || data.length === 0) {
-        console.error("No admin data found for this user");
-        alert("Configuration failed. Please contact support.");
-        return;
-      }
+      // if (!data || data.length === 0) {
+      //   console.error("No admin data found for this user");
+      //   alert("Configuration failed. Please contact support.");
+      //   return;
+      // }
 
-      if (data && data.length > 0) {
-        const universityId = data[0].university_id;
+      // if (data && data.length > 0) {
+        const universityId = userData?.data?.user?.user_metadata?.university_id;
         console.log(universityId);
         const { data: modulesData, error: modulesError } = await supabase
           .from("modules")
@@ -108,7 +109,7 @@ const CMSModuleConfigure = () => {
           }, {});
           await supabase.from("modules").update(updatedModules).eq("id", modules.id);
         }
-      }
+      // }
     }
     router.push("/onboarding?step=configure&type=systems"); // Redirect back to systems configuration
   };

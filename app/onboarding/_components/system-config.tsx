@@ -78,7 +78,7 @@ const SystemsConfiguration = () => {
         });
       return;
     }
-    router.push("/dashboard"); // Redirect to the dashboard or next step
+    router.push("/admin"); // Redirect to the dashboard or next step
   };
 
   return (

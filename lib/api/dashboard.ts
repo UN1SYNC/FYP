@@ -36,9 +36,9 @@ export async function getDashboardStats(): Promise<{ stats: StatItem[] }> {
     .from('courses')
     .select('*', { count: 'exact', head: true });
   
-  // Get universities count
-  const { count: universities, error: universitiesError } = await supabase
-    .from('university')
+  // Get instructors count
+  const { count: instructors, error: instructorsError } = await supabase
+    .from('instructors')
     .select('*', { count: 'exact', head: true });
   
   // Calculate percentage changes (in a real app, you would compare with previous period data)
@@ -71,11 +71,11 @@ export async function getDashboardStats(): Promise<{ stats: StatItem[] }> {
         icon: "BookOpen",
       },
       {
-        title: "Universities",
-        value: universities || 0,
+        title: "Total Instructors",
+        value: instructors || 0,
         change: getRandomChange(),
         increase: Math.random() > 0.5,
-        icon: "School",
+        icon: "GraduationCap",
       },
     ]
   };

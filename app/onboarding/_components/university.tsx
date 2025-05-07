@@ -31,7 +31,7 @@ const UniversityConfiguration = () => {
     if (universityError) {
       console.log(universityError);
     }
-    router.push("/onboarding?step=select&type=systems");
+    router.push("/onboarding?step=select&type=modules");
   };
 
   return (

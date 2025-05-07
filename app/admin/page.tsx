@@ -25,7 +25,7 @@ export default async function AdminDashboard() {
     Users: <Users className="h-8 w-8 text-black" />,
     UserPlus: <UserPlus className="h-8 w-8 text-black" />,
     BookOpen: <BookOpen className="h-8 w-8 text-black" />,
-    School: <School className="h-8 w-8 text-black" />,
+    GraduationCap: <GraduationCap className="h-8 w-8 text-black" />,
   };
   
   // Quick access cards
@@ -33,35 +33,35 @@ export default async function AdminDashboard() {
     {
       title: "Student Registration",
       description: "Register new students in the system",
-      href: "/student-register",
+      href: "/admin/student-register",
       icon: <UserPlus className="h-8 w-8" />,
       color: "bg-gray-100",
     },
     {
       title: "Student Enrollment",
       description: "Manage course enrollments for students",
-      href: "/student-enroll",
+      href: "/admin/student-enroll",
       icon: <Users className="h-8 w-8" />,
       color: "bg-gray-100",
     },
     {
       title: "Course Registration",
       description: "Add and configure new courses",
-      href: "/course-register",
+      href: "/admin/course-register",
       icon: <BookOpen className="h-8 w-8" />,
       color: "bg-gray-100",
     },
     {
       title: "University Management",
       description: "Manage university settings and configurations",
-      href: "/university",
+      href: "/admin/university",
       icon: <Building className="h-8 w-8" />,
       color: "bg-gray-100",
     },
     {
       title: "Faculty Management",
       description: "Add and manage faculty members",
-      href: "/faculty",
+      href: "/admin/instructor-register",
       icon: <GraduationCap className="h-8 w-8" />,
       color: "bg-gray-100",
     },
