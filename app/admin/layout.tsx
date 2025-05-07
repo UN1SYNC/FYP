@@ -68,6 +68,26 @@ function AdminSidebar() {
       icon: <BookOpen size={20} />,
     },
     {
+      name: "School Registration",
+      href: "/admin/school-register",
+      icon: <School size={20} />,
+    },
+    {
+      name: "Degree Program Registration",
+      href: "/admin/degree-register",
+      icon: <GraduationCap size={20} />,
+    },
+    {
+      name: "Batch Registration",
+      href: "/admin/batch-register",
+      icon: <Users size={20} />,
+    },
+    {
+      name: "Section Registration",
+      href: "/admin/section-register",
+      icon: <BookOpen size={20} />,
+    },
+    {
       name: "Course Assignment",
       href: "/admin/course-assignment",
       icon: <BookOpen size={20} />,
