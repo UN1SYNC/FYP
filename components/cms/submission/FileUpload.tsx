@@ -8,7 +8,7 @@ import { useToast } from "@/hooks/use-toast";
 import Loading from "@/components/ui/loading";
 
 interface FileUploadProps {
-  onFileSelect: (file: File) => void;
+  onFileSelect: (file: File, filePath: string) => void;
   submissionId: string;
   courseId: string;
 }
@@ -18,6 +18,38 @@ export const FileUpload = ({ onFileSelect, submissionId, courseId }: FileUploadP
   const [isUploading, setIsUploading] = useState(false);
   const supabase = createClient();
   const { toast } = useToast();
+
+  // Function to ensure bucket exists
+  const ensureBucketExists = async (bucketName: string) => {
+    try {
+      // First try to get the bucket
+      const { data: bucketData, error: bucketError } = await supabase.storage.getBucket(bucketName);
+
+      // If bucket doesn't exist (404 error)
+      if (bucketError && bucketError.message?.includes('Bucket not found')) {
+        console.log(`Bucket "${bucketName}" not found, creating it...`);
+        
+        // Create the bucket with public access
+        const { data, error } = await supabase.storage.createBucket(bucketName, {
+          public: true, // Make it publicly accessible
+        });
+
+        if (error) {
+          throw new Error(`Failed to create bucket: ${error.message}`);
+        }
+        
+        console.log(`Bucket "${bucketName}" created successfully`);
+        return true;
+      } else if (bucketError) {
+        throw bucketError;
+      }
+      
+      return true;
+    } catch (error) {
+      console.error('Error ensuring bucket exists:', error);
+      return false;
+    }
+  };
 
   const handleUpload = async (file: File) => {
     try {
@@ -33,24 +65,26 @@ export const FileUpload = ({ onFileSelect, submissionId, courseId }: FileUploadP
 
       setIsUploading(true);
       
-      // Log file details for debugging
-      console.log('Uploading file:', {
-        name: file.name,
-        size: file.size,
-        type: file.type
-      });
-      
       // Create a unique file path following the exact bucket hierarchy
       const fileExt = file.name.split('.').pop()?.toLowerCase();
       const timestamp = Date.now();
       const fileName = `${file.name.split('.')[0]}-${timestamp}.${fileExt}`;
       // Using the exact path structure from your Supabase bucket
-      const filePath = `courses/${fileName}`;
+      const filePath = `courses/${courseId}/assignments/${submissionId}/${fileName}`;
       
       console.log('Upload path:', filePath);
 
+      // Ensure the bucket exists before uploading
+      const bucketName = 'submissions';
+      const bucketExists = await ensureBucketExists(bucketName);
+      
+      if (!bucketExists) {
+        throw new Error('Failed to ensure storage bucket exists');
+      }
+
+      // Now proceed with upload
       const { error: uploadError, data } = await supabase.storage
-        .from('NUST-1')
+        .from(bucketName)
         .upload(filePath, file, {
           cacheControl: '3600',
           upsert: false
@@ -63,20 +97,15 @@ export const FileUpload = ({ onFileSelect, submissionId, courseId }: FileUploadP
 
       console.log('Upload successful:', data);
 
-      // Get the public URL of the uploaded file
-      const { data: { publicUrl } } = supabase.storage
-        .from('NUST-1')
-        .getPublicUrl(filePath);
-
       toast({
         title: "Success",
         description: "File uploaded successfully!",
       });
 
-      // Pass the file and its URL to the parent component
-      onFileSelect(file);
+      // Pass the file and the file path to the parent component
+      onFileSelect(file, filePath);
       
-      return publicUrl;
+      return filePath;
     } catch (error) {
       console.error('Error details:', error);
       let errorMessage = 'Failed to upload file. Please try again.';

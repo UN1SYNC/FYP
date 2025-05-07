@@ -7,6 +7,8 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import { createClient } from "@/utils/supabase/client";
 import Loading from "@/components/ui/loading";
+import { useSelector } from "react-redux";
+import { RootState } from "@/lib/store";
 
 interface Assignment {
   assignment_id: number;
@@ -23,27 +25,58 @@ const Submission = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const supabase = createClient();
+  const user = useSelector((state: RootState) => state.auth.user);
 
   useEffect(() => {
     const fetchAssignments = async () => {
       try {
-        if (isNaN(courseId)) {
-          throw new Error('Invalid course ID');
+        if (isNaN(courseId) || !user) {
+          throw new Error('Invalid course ID or user not logged in');
         }
 
-        const { data, error } = await supabase
+        // First, get the student_id for the current user
+        const { data: studentData, error: studentError } = await supabase
+          .from('students')
+          .select('student_id')
+          .eq('user_id', user.id)
+          .single();
+
+        if (studentError) {
+          throw studentError;
+        }
+
+        const studentId = studentData.student_id;
+
+        // Fetch assignments for this course
+        const { data: assignmentsData, error: assignmentsError } = await supabase
           .from('assignments')
           .select('*')
           .eq('course_id', courseId);
 
-        if (error) {
-          throw error;
+        if (assignmentsError) {
+          throw assignmentsError;
         }
 
-        // Add a default status to each assignment
-        const assignmentsWithStatus = data.map(assignment => ({
+        // Fetch submission statuses from assignment_grades table
+        const { data: gradesData, error: gradesError } = await supabase
+          .from('assignment_grades')
+          .select('assignment_id, submission_path')
+          .eq('student_id', studentId);
+
+        if (gradesError) {
+          throw gradesError;
+        }
+
+        // Create a map of assignment_id to submission status
+        const submissionMap = new Map();
+        gradesData?.forEach(grade => {
+          submissionMap.set(grade.assignment_id, grade.submission_path ? "Submitted" : "Not Submitted");
+        });
+
+        // Add status to each assignment
+        const assignmentsWithStatus = assignmentsData.map(assignment => ({
           ...assignment,
-          status: "Not Submitted" // Default status
+          status: submissionMap.get(assignment.assignment_id) || "Not Submitted"
         }));
 
         setAssignments(assignmentsWithStatus);
@@ -56,7 +89,7 @@ const Submission = () => {
     };
 
     fetchAssignments();
-  }, [courseId]);
+  }, [courseId, user]);
 
   if (isLoading) {
     return (

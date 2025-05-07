@@ -23,6 +23,7 @@ const Topbar = () => {
 
   // Get the current URL and format it dynamically
   const currentUrl = `/${window.location.pathname.split("/").slice(1, 3).join("/")}`;
+  const hiddenTabs = ["project_management", "notification_system", "fee_management", "timetable_generation"];
 
   useEffect(() => {
     const fetchModules = async () => {
@@ -51,7 +52,7 @@ const Topbar = () => {
               <Link href={`${currentUrl}`}><InfoIcon size={24} /></Link>
             </Button>
             {modulesData
-              .filter((module) => modules[module.key]) // Show only enabled modules
+              .filter((module) => modules[module.key] && !hiddenTabs.includes(module.key)) // Show only enabled modules and hide specific tabs
               .map((module) => (
                 <Button key={module.key} className="bg-black/90 text-white hover:bg-black/60">
                   <Link href={`${currentUrl}${module.url}`}>{module.name}</Link>
