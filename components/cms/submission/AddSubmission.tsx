@@ -10,6 +10,10 @@ import { FileUpload } from "./FileUpload";
 import { useToast } from "@/hooks/use-toast";
 import { createClient } from "@/utils/supabase/client";
 import Loading from "@/components/ui/loading";
+import { useSelector } from "react-redux";
+import { RootState } from "@/lib/store";
+import { download } from "@/lib/utils";
+import { FileText, Download } from "lucide-react";
 
 interface Assignment {
   assignment_id: number;
@@ -17,7 +21,13 @@ interface Assignment {
   description: string;
   due_date: string;
   created_at: string;
-  file_path: string | null;
+}
+
+interface SubmissionInfo {
+  submission_path: string | null;
+  gained_grades: number;
+  total_grade: number;
+  student_id: number;
 }
 
 interface AddSubmissionProps {
@@ -30,38 +40,90 @@ export const AddSubmission = ({ submissionId, courseId }: AddSubmissionProps) =>
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [timeRemaining, setTimeRemaining] = useState("");
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [selectedFilePath, setSelectedFilePath] = useState<string | null>(null);
   const [assignment, setAssignment] = useState<Assignment | null>(null);
+  const [submissionInfo, setSubmissionInfo] = useState<SubmissionInfo | null>(null);
   const [isOverdue, setIsOverdue] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
   const supabase = createClient();
-
-  // Hardcoded status values
-  const submissionStatus = "No attempt";
-  const gradingStatus = "Not graded";
+  const user = useSelector((state: RootState) => state.auth.user);
 
   useEffect(() => {
-    const fetchAssignment = async () => {
+    const fetchAssignmentAndSubmission = async () => {
       try {
+        setIsLoading(true);
         const assignmentId = parseInt(submissionId);
-        if (isNaN(assignmentId)) {
-          throw new Error('Invalid assignment ID');
+        
+        if (isNaN(assignmentId) || !user) {
+          throw new Error('Invalid assignment ID or user not logged in');
         }
 
-        const { data, error } = await supabase
+        // Get student ID for current user
+        const { data: studentData, error: studentError } = await supabase
+          .from('students')
+          .select('student_id')
+          .eq('user_id', user.id)
+          .single();
+
+        if (studentError) {
+          throw studentError;
+        }
+
+        const studentId = studentData.student_id;
+
+        // Fetch assignment details
+        const { data: assignmentData, error: assignmentError } = await supabase
           .from('assignments')
           .select('*')
           .eq('assignment_id', assignmentId)
           .single();
 
-        if (error) {
-          throw error;
+        if (assignmentError) {
+          throw assignmentError;
         }
 
-        setAssignment(data);
+        setAssignment(assignmentData);
+
+        // Check for existing submission
+        const { data: submissionData, error: submissionError } = await supabase
+          .from('assignment_grades')
+          .select('*')
+          .eq('assignment_id', assignmentId)
+          .eq('student_id', studentId)
+          .maybeSingle();
+
+        if (submissionError) {
+          throw submissionError;
+        }
+
+        // If student has a submission already
+        if (submissionData) {
+          setSubmissionInfo(submissionData);
+        } else {
+          // Create an empty submission record if one doesn't exist
+          const { data: newSubmission, error: createError } = await supabase
+            .from('assignment_grades')
+            .insert({
+              assignment_id: assignmentId,
+              student_id: studentId,
+              submission_path: null,
+              gained_grades: 0,
+              total_grade: 100
+            })
+            .select()
+            .single();
+
+          if (createError) {
+            throw createError;
+          }
+
+          setSubmissionInfo(newSubmission);
+        }
 
         // Calculate time remaining
-        if (data.due_date) {
-          const dueDate = new Date(data.due_date);
+        if (assignmentData.due_date) {
+          const dueDate = new Date(assignmentData.due_date);
           const now = new Date();
           setIsOverdue(now > dueDate);
           
@@ -79,14 +141,17 @@ export const AddSubmission = ({ submissionId, courseId }: AddSubmissionProps) =>
       } catch (error) {
         console.error('Error:', error);
         setError(error instanceof Error ? error.message : 'Failed to fetch assignment details');
+      } finally {
+        setIsLoading(false);
       }
     };
 
-    fetchAssignment();
-  }, [submissionId]);
+    fetchAssignmentAndSubmission();
+  }, [submissionId, user]);
 
-  const handleFileSelect = (file: File) => {
+  const handleFileSelect = (file: File, filePath: string) => {
     setSelectedFile(file);
+    setSelectedFilePath(filePath);
     toast({
       title: "File selected",
       description: `${file.name} has been selected for upload.`,
@@ -96,7 +161,7 @@ export const AddSubmission = ({ submissionId, courseId }: AddSubmissionProps) =>
   };
 
   const handleSubmit = async () => {
-    if (!selectedFile) {
+    if (!selectedFile || !selectedFilePath || !submissionInfo) {
       toast({
         variant: "destructive",
         title: "No file selected",
@@ -106,16 +171,39 @@ export const AddSubmission = ({ submissionId, courseId }: AddSubmissionProps) =>
     }
 
     try {
-      // Here you would implement your file upload logic
+      // Update the assignment_grades record with the file path
+      const { error: updateError } = await supabase
+        .from('assignment_grades')
+        .update({
+          submission_path: selectedFilePath,
+          // File name can be stored if needed
+          file_name: selectedFile.name,
+        })
+        .eq('assignment_id', parseInt(submissionId))
+        .eq('student_id', submissionInfo.student_id);
+
+      if (updateError) {
+        throw updateError;
+      }
+
+      // Update local state
+      setSubmissionInfo({
+        ...submissionInfo,
+        submission_path: selectedFilePath
+      });
+
       toast({
         title: "Success",
         description: "Your submission has been uploaded successfully.",
         className: "bg-green-500 border-green-500 text-white",
         duration: 1000
       });
+      
       setIsModalOpen(false);
       setSelectedFile(null);
+      setSelectedFilePath(null);
     } catch (error) {
+      console.error('Error submitting assignment:', error);
       toast({
         variant: "destructive",
         title: "Error",
@@ -123,6 +211,71 @@ export const AddSubmission = ({ submissionId, courseId }: AddSubmissionProps) =>
       });
     }
   };
+
+  const handleDownload = async () => {
+    if (!submissionInfo?.submission_path) return;
+    
+    try {
+      // Ensure bucket exists
+      const bucketName = 'submissions';
+      try {
+        // First try to get the bucket
+        const { data: bucketData, error: bucketError } = await supabase.storage.getBucket(bucketName);
+  
+        // If bucket doesn't exist (404 error)
+        if (bucketError && bucketError.message?.includes('Bucket not found')) {
+          console.log(`Bucket "${bucketName}" not found, creating it...`);
+          
+          // Create the bucket with public access
+          const { data, error } = await supabase.storage.createBucket(bucketName, {
+            public: true, // Make it publicly accessible
+          });
+  
+          if (error) {
+            throw new Error(`Failed to create bucket: ${error.message}`);
+          }
+          
+          console.log(`Bucket "${bucketName}" created successfully`);
+        } else if (bucketError) {
+          throw bucketError;
+        }
+      } catch (error) {
+        console.error('Error ensuring bucket exists:', error);
+      }
+
+      // Download the file
+      const { data, error } = await supabase.storage
+        .from(bucketName)
+        .download(submissionInfo.submission_path);
+        
+      if (error) throw error;
+      
+      // Parse the file name from path
+      const fileName = submissionInfo.submission_path.split('/').pop() || 'download';
+      download(data, fileName);
+      
+      toast({
+        title: "Success",
+        description: "File downloaded successfully",
+        className: "bg-green-500 border-green-500 text-white",
+        duration: 2000,
+      });
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        title: "Download Error",
+        description: "Failed to download your submission.",
+      });
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <div className="w-full h-[50vh] flex items-center justify-center">
+        <Loading />
+      </div>
+    );
+  }
 
   if (error) {
     return (
@@ -140,6 +293,11 @@ export const AddSubmission = ({ submissionId, courseId }: AddSubmissionProps) =>
     );
   }
 
+  const submissionStatus = submissionInfo?.submission_path ? "Submitted" : "No attempt";
+  const gradingStatus = submissionInfo?.submission_path 
+    ? (submissionInfo.gained_grades > 0 ? `${submissionInfo.gained_grades}/${submissionInfo.total_grade}` : "Not graded") 
+    : "Not graded";
+
   return (
     <div className="w-full p-4 md:p-6">
       <Card className="w-full">
@@ -156,7 +314,11 @@ export const AddSubmission = ({ submissionId, courseId }: AddSubmissionProps) =>
               
               <div className="space-y-1">
                 <span className="text-sm font-semibold text-gray-700">Submission status</span>
-                <p className="text-sm">{submissionStatus}</p>
+                <p className="text-sm">
+                  <Badge variant={submissionStatus === "Submitted" ? "success" : "warning"}>
+                    {submissionStatus}
+                  </Badge>
+                </p>
               </div>
               
               <div className="space-y-1">
@@ -186,21 +348,38 @@ export const AddSubmission = ({ submissionId, courseId }: AddSubmissionProps) =>
                 </p>
               </div>
               
+              {submissionInfo?.submission_path && (
               <div className="space-y-1">
-                <span className="text-sm font-semibold text-gray-700">Last modified</span>
-                <p className="text-sm">{assignment.file_path ? new Date(assignment.created_at).toLocaleString() : '-'}</p>
+                  <span className="text-sm font-semibold text-gray-700">Your submission</span>
+                  <Button 
+                    variant="outline"
+                    size="sm"
+                    className="flex items-center gap-1 text-sm"
+                    onClick={handleDownload}
+                  >
+                    <FileText size={14} className="mr-1" />
+                    <span className="truncate max-w-[180px]">
+                      {submissionInfo.submission_path.split('/').pop()}
+                    </span>
+                    <Download size={14} className="ml-1" />
+                  </Button>
               </div>
+              )}
             </div>
 
             {/* Add submission section */}
             <div className="flex flex-col items-start">
               <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
                 <DialogTrigger asChild>
-                  <Button size="lg" className="w-full md:w-auto">Add submission</Button>
+                  <Button size="lg" className="w-full md:w-auto">
+                    {submissionInfo?.submission_path ? "Update submission" : "Add submission"}
+                  </Button>
                 </DialogTrigger>
                 <DialogContent className="sm:max-w-[525px]">
                   <DialogHeader>
-                    <DialogTitle>Add Submission</DialogTitle>
+                    <DialogTitle>
+                      {submissionInfo?.submission_path ? "Update Submission" : "Add Submission"}
+                    </DialogTitle>
                   </DialogHeader>
                   <div className="space-y-4 py-4">
                     <div className="space-y-4">
@@ -218,7 +397,10 @@ export const AddSubmission = ({ submissionId, courseId }: AddSubmissionProps) =>
                         <Button
                           variant="ghost"
                           size="sm"
-                          onClick={() => setSelectedFile(null)}
+                          onClick={() => {
+                            setSelectedFile(null);
+                            setSelectedFilePath(null);
+                          }}
                         >
                           Remove
                         </Button>
@@ -244,7 +426,9 @@ export const AddSubmission = ({ submissionId, courseId }: AddSubmissionProps) =>
               </Dialog>
 
               <p className="text-sm text-gray-500 mt-4">
-                {submissionStatus === "No attempt" ? "You have not made a submission yet." : "Your submission is pending review."}
+                {submissionInfo?.submission_path 
+                  ? "You can update your submission until the due date."
+                  : "You have not made a submission yet."}
               </p>
             </div>
           </div>

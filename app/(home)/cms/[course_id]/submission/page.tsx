@@ -1,10 +1,21 @@
-import Submission from "@/components/cms/submission/Submission";
+"use client";
 
-const SubmissionPage = async () => {
-  // Here you can fetch any server-side data needed
-  // const submissions = await fetchSubmissions();
+import { useSelector } from "react-redux";
+import { RootState } from "@/lib/store";
+import Submission from "@/components/cms/submission/Submission";
+import InstructorSubmission from "@/components/cms/submission/InstructorSubmission";
+import Loading from "@/components/ui/loading";
+
+const SubmissionPage = () => {
+  const user = useSelector((state: RootState) => state.auth.user);
   
-  return <Submission />;
+  if (!user) return <Loading />;
+  
+  if (user.role === "instructor") {
+    return <InstructorSubmission />;
+  } else {
+    return <Submission />;
+  }
 };
 
 export default SubmissionPage;
