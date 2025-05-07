@@ -18,6 +18,12 @@ const ProfileView = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  if (user?.role === 'instructor') {
+    return (
+      <></>
+    )
+  }
+
   useEffect(() => {
     const fetchStudentAndSchool = async () => {
       setLoading(true);
