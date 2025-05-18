@@ -36,7 +36,7 @@ const Topbar = () => {
       }
 
       if (!userData?.university_id) {
-        setError("User university ID not found.");
+        setError("User university ID not found.") ;
         return;
       }
 
