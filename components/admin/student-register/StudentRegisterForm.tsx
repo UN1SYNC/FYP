@@ -163,7 +163,7 @@ export function StudentRegisterForm() {
           user_id: authData.user!.id,
           section_id: values.section_id,
           degree_id: values.degree_id,
-          school_id: values.school_id,
+          // school_id: values.school_id,
           university_id: userData?.details?.uni_id,
         });
 
