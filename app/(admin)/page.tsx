@@ -17,7 +17,6 @@ import { getDashboardStats, getRecentActivity } from '@/lib/api/dashboard';
 export default async function AdminDashboard() {
   // Fetch dynamic dashboard data from Supabase
   const { stats } = await getDashboardStats();
-  console.log(stats)
   const recentActivity = await getRecentActivity();
 
   // Map icon names to actual components

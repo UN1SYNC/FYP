@@ -11,6 +11,7 @@ interface AuthState {
     lastSignIn: string;
     createdAt: string;
     details: any;
+    university_id: number
   } | null; // User data will be null when logged out
 }
 
@@ -36,7 +37,8 @@ const authSlice = createSlice({
         name: user.name || "Anonymous",
         lastSignIn: user.lastSignIn,
         createdAt: user.created_at,
-        details: user.roleDetails
+        details: user.roleDetails,
+        university_id: user.university_id,
       };
     
       console.log("User logged in:", state.user);
