@@ -5,6 +5,8 @@ import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { supabase } from "../../../utils/supabase/supabase";
 import { InfoIcon } from "lucide-react";
+import { useSelector } from "react-redux";
+import { RootState } from "@/lib/store";
 
 const modulesData = [
   { key: "course_material", name: "Course Content", url: "/content" },
@@ -21,6 +23,8 @@ const Topbar = () => {
   const [modules, setModules] = useState<Record<string, boolean>>({});
   const [error, setError] = useState<string | null>(null);
 
+  const userData = useSelector((state: RootState) => state.auth.user);
+
   // Get the current URL and format it dynamically
   const currentUrl = `/${window.location.pathname.split("/").slice(1, 3).join("/")}`;
 
@@ -31,7 +35,15 @@ const Topbar = () => {
         return;
       }
 
-      let { data, error } = await supabase.from("modules").select("*");
+      if (!userData?.university_id) {
+        setError("User university ID not found.");
+        return;
+      }
+
+      let { data, error } = await supabase
+        .from("modules")
+        .select("*")
+        .eq("university_id", userData.university_id);
       if (error) {
         setError(error.message);
       } else if (data && data.length > 0) {
@@ -40,7 +52,7 @@ const Topbar = () => {
     };
 
     fetchModules();
-  }, []);
+  }, [userData]);
 
   return (
     <section className="py-4">
