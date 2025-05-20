@@ -65,21 +65,6 @@ function AdminSidebar() {
       icon: <BarChart3 size={20} />,
     },
     {
-      name: "Student Registration",
-      href: "/admin/student-register",
-      icon: <UserPlus size={20} />,
-    },
-    {
-      name: "Student Enrollment",
-      href: "/admin/student-enroll",
-      icon: <Users size={20} />,
-    },
-    {
-      name: "Course Registration",
-      href: "/admin/course-register",
-      icon: <BookOpen size={20} />,
-    },
-    {
       name: "School Registration",
       href: "/admin/school-register",
       icon: <School size={20} />,
@@ -100,8 +85,18 @@ function AdminSidebar() {
       icon: <BookOpen size={20} />,
     },
     {
-      name: "Course Assignment",
-      href: "/admin/course-assignment",
+      name: "Student Registration",
+      href: "/admin/student-register",
+      icon: <UserPlus size={20} />,
+    },
+    {
+      name: "Instructor Registration",
+      href: "/admin/instructor-register",
+      icon: <User size={20} />,
+    },
+    {
+      name: "Course Registration",
+      href: "/admin/course-register",
       icon: <BookOpen size={20} />,
     },
     {
@@ -110,9 +105,14 @@ function AdminSidebar() {
       icon: <BookOpen size={20} />,
     },
     {
-      name: "Instructor Registration",
-      href: "/admin/instructor-register",
-      icon: <User size={20} />,
+      name: "Course Assignment",
+      href: "/admin/course-assignment",
+      icon: <BookOpen size={20} />,
+    },
+    {
+      name: "Student Enrollment",
+      href: "/admin/student-enroll",
+      icon: <Users size={20} />,
     },
     {
       name: "Admin Registration",
