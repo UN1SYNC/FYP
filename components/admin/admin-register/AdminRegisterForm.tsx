@@ -77,14 +77,14 @@ export function AdminRegisterForm() {
 
   useEffect(() => {
     const fetchSchools = async () => {
-      if (!userData?.details?.uni_id) return;
-      
+      if (!userData?.university_id) return;
+
       try {
         const { data, error } = await supabase
           .from('school')
           .select('id, name, uni_id')
-          .eq('uni_id', userData.details.uni_id);
-        
+          .eq('uni_id', userData?.university_id);
+
         if (error) {
           console.error("Error fetching schools:", error);
           toast({
@@ -95,7 +95,7 @@ export function AdminRegisterForm() {
           });
           return;
         }
-        
+
         setSchools(data || []);
       } catch (error: any) {
         console.error("Error fetching schools:", error);
@@ -126,7 +126,7 @@ export function AdminRegisterForm() {
             address: values.address,
             phone: phoneNumber,
             role: "admin",
-            university_id: userData?.details?.uni_id,
+            university_id: userData?.university_id,
           }
         }
       });

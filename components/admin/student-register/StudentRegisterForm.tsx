@@ -111,13 +111,13 @@ export function StudentRegisterForm() {
 
   useEffect(() => {
     async function fetchSchools() {
-      if (!userData?.details?.uni_id) return;
+      if (!userData?.university_id) return;
       
       try {
         const { data, error } = await supabase
           .from('school')
           .select('id, name, uni_id')
-          .eq('uni_id', userData.details.uni_id);
+          .eq('uni_id', userData?.university_id);
         
         if (error) throw error;
         setSchools(data || []);
@@ -149,7 +149,7 @@ export function StudentRegisterForm() {
             address: values.address,
             phone: phoneNumber,
             role: "student",
-            university_id: userData?.details?.uni_id,
+            university_id: userData?.university_id,
           }
         }
       });
@@ -164,7 +164,7 @@ export function StudentRegisterForm() {
           section_id: values.section_id,
           degree_id: values.degree_id,
           // school_id: values.school_id,
-          university_id: userData?.details?.uni_id,
+          university_id: userData?.university_id,
         });
 
       if (studentError) throw studentError;
@@ -236,6 +236,7 @@ export function StudentRegisterForm() {
           .from('batch')
           .select('batch_id, intake, degree_id')
           .eq('degree_id', degreeId)
+          .eq('university_id', userData?.university_id)
           .order('intake', { ascending: false });
         
         if (error) throw error;

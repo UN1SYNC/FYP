@@ -89,13 +89,13 @@ export function BatchRegisterForm() {
   // Fetch schools
   useEffect(() => {
     const fetchSchools = async () => {
-      if (!userData?.details?.uni_id) return;
+      if (!userData?.university_id) return;
 
       try {
         const { data, error } = await supabase
           .from('school')
           .select('*')
-          .eq('uni_id', userData.details.uni_id);
+          .eq('uni_id', userData?.university_id);
 
         if (error) throw error;
         setSchools(data || []);
@@ -154,7 +154,7 @@ export function BatchRegisterForm() {
   }, [watchSchoolId, degrees, form]);
 
   const onSubmit = async (values: BatchFormValues) => {
-    if (!userData?.details?.uni_id) {
+    if (!userData?.university_id) {
       toast({
         title: "Error",
         description: "University ID not found",
@@ -171,7 +171,7 @@ export function BatchRegisterForm() {
         .insert({
           degree_id: parseInt(values.degreeId),
           intake: values.intake,
-          university_id: userData.details.uni_id,
+          university_id: userData?.university_id,
         });
 
       if (error) throw error;

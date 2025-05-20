@@ -79,13 +79,13 @@ export function DegreeRegisterForm() {
   // Fetch the list of schools for the dropdown
   useEffect(() => {
     const fetchSchools = async () => {
-      if (!userData?.details?.uni_id) return;
+      if (!userData?.university_id) return;
 
       try {
         const { data, error } = await supabase
           .from('school')
           .select('*')
-          .eq('uni_id', userData.details.uni_id);
+          .eq('uni_id', userData?.university_id);
 
         if (error) throw error;
         setSchools(data || []);
@@ -103,7 +103,7 @@ export function DegreeRegisterForm() {
   }, [userData, supabase, toast]);
 
   const onSubmit = async (values: DegreeFormValues) => {
-    if (!userData?.details?.uni_id) {
+    if (!userData?.university_id) {
       toast({
         title: "Error",
         description: "University ID not found",
