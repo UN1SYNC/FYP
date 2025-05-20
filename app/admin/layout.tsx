@@ -105,6 +105,11 @@ function AdminSidebar() {
       icon: <BookOpen size={20} />,
     },
     {
+      name: "Course Section Assignment",
+      href: "/admin/course-section-assignment",
+      icon: <BookOpen size={20} />,
+    },
+    {
       name: "Instructor Registration",
       href: "/admin/instructor-register",
       icon: <User size={20} />,
@@ -132,7 +137,7 @@ function AdminSidebar() {
             <span className="text-xl font-bold">UniSync Admin</span>
           </div>
         </div>
-        <div className="flex flex-col flex-1 overflow-y-auto">
+        <div className="flex flex-col flex-1 overflow-y-auto custom-scrollbar">
           <nav className="flex-1 px-2 py-4 space-y-1">
             {navItems.map((item) => (
               <Link
@@ -159,6 +164,23 @@ function AdminSidebar() {
             </button>
           </div>
         </div>
+        <style jsx>{`
+          .custom-scrollbar {
+            scrollbar-width: thin;
+            scrollbar-color: #444 #232323;
+          }
+          .custom-scrollbar::-webkit-scrollbar {
+            width: 8px;
+            background: #232323;
+          }
+          .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #444;
+            border-radius: 8px;
+          }
+          .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: #666;
+          }
+        `}</style>
       </div>
     </aside>
   );

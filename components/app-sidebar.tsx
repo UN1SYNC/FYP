@@ -62,6 +62,10 @@ const data = {
           title: "Course Content",
           url: "#",
         },
+        {
+          title: "Course Section Assignment",
+          url: "/admin/course-section-assignment",
+        },
       ],
     },
   ]
