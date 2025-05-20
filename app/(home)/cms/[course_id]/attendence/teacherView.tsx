@@ -186,31 +186,60 @@ const MarkAttendancePage = () => {
   useEffect(() => {
     const fetchPreviousSessions = async () => {
       if (!user || !user.details) return;
-      const teacher_id = user.details.user_id || ""; // Add null check with default value
+      const teacher_id = user.details.user_id || "";
       const now = new Date();
       const day = now.getDay(); // 0 for Sunday
       const weekStart = new Date(now.getFullYear(), now.getMonth(), now.getDate() - day);
       const weekStartStr = weekStart.toISOString().split("T")[0];
-
+      
+      // First, fetch sessions for this course in the current week
       const { data: sessionsData, error: sessionsError } = await supabase
         .from("class_sessions")
-        // Include join to fetch attendance for summary
-        .select("*, attendances(*)")
+        .select("*")
         .eq("course_id", course_id)
         .eq("teacher_id", teacher_id)
         .gte("session_date", weekStartStr)
-        .lt("session_date", today); // previous sessions only
+        .lte("session_date", today) // Include today and past days this week
+        .order('session_date', { ascending: false });
 
       if (sessionsError) {
         console.error("Error fetching previous sessions:", sessionsError);
         return;
       }
-      console.log("Previous sessions:", sessionsData);
-      setPreviousSessions(sessionsData || []);
+      
+      // If we have sessions, fetch attendance data for each session
+      if (sessionsData && sessionsData.length > 0) {
+        const sessionsWithAttendance = await Promise.all(
+          sessionsData.map(async (session) => {
+            // For each session, get its attendance records
+            const { data: attendanceData, error: attendanceError } = await supabase
+              .from("attendances")
+              .select("*")
+              .eq("session_id", session.session_id);
+              
+            if (attendanceError) {
+              console.error(`Error fetching attendance for session ${session.session_id}:`, attendanceError);
+              return { ...session, attendances: [] };
+            }
+            
+            return { ...session, attendances: attendanceData || [] };
+          })
+        );
+        
+        // Filter out the current active session if it exists
+        const previousSessions = session 
+          ? sessionsWithAttendance.filter(s => s.session_id !== session.session_id) 
+          : sessionsWithAttendance;
+          
+        console.log("Previous sessions:", previousSessions);
+        setPreviousSessions(previousSessions);
+      } else {
+        setPreviousSessions([]);
+      }
     };
 
     fetchPreviousSessions();
-  }, [user, course_id, today, supabase]);
+  }, [user, course_id, today, supabase, session]);
 
   // Fetch recurring sessions
   useEffect(() => {
@@ -380,31 +409,52 @@ const MarkAttendancePage = () => {
       setEndTime("");
       setRoomNumber("");
       
-      // Refresh previous sessions if the created session is for a past date
-      if (sessionDate < today) {
-        const fetchPreviousSessions = async () => {
-          if (!user?.details?.user_id) return;
-          
-          const now = new Date();
-          const day = now.getDay();
-          const weekStart = new Date(now.getFullYear(), now.getMonth(), now.getDate() - day);
-          const weekStartStr = weekStart.toISOString().split("T")[0];
-          
-          const { data: sessionsData } = await supabase
-            .from("class_sessions")
-            .select("*, attendances(*)")
-            .eq("course_id", course_id)
-            .eq("teacher_id", teacher_id)
-            .gte("session_date", weekStartStr)
-            .lt("session_date", today);
-            
-          if (sessionsData) {
-            setPreviousSessions(sessionsData);
-          }
-        };
+      // Always fetch previous sessions after creating a new one
+      const fetchPreviousSessions = async () => {
+        if (!user?.details?.user_id) return;
         
-        fetchPreviousSessions();
-      }
+        const now = new Date();
+        const day = now.getDay();
+        const weekStart = new Date(now.getFullYear(), now.getMonth(), now.getDate() - day);
+        const weekStartStr = weekStart.toISOString().split("T")[0];
+        
+        // First, fetch sessions for this course in the current week
+        const { data: sessionsData, error: sessionsError } = await supabase
+          .from("class_sessions")
+          .select("*")
+          .eq("course_id", course_id)
+          .eq("teacher_id", teacher_id)
+          .gte("session_date", weekStartStr)
+          .lte("session_date", today) // Include today and past days this week
+          .order('session_date', { ascending: false });
+
+        if (sessionsError || !sessionsData) {
+          console.error("Error fetching previous sessions:", sessionsError);
+          return;
+        }
+        
+        // Fetch attendance data for each session
+        const sessionsWithAttendance = await Promise.all(
+          sessionsData.map(async (session) => {
+            // For each session, get its attendance records
+            const { data: attendanceData } = await supabase
+              .from("attendances")
+              .select("*")
+              .eq("session_id", session.session_id);
+              
+            return { ...session, attendances: attendanceData || [] };
+          })
+        );
+        
+        // Filter out the current active session if it exists
+        const previousSessions = session 
+          ? sessionsWithAttendance.filter(s => s.session_id !== session.session_id) 
+          : sessionsWithAttendance;
+          
+        setPreviousSessions(previousSessions);
+      };
+      
+      fetchPreviousSessions();
     } catch (error) {
       console.error("Unexpected error creating session:", error);
       toast({
