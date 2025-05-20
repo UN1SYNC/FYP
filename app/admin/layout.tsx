@@ -105,6 +105,11 @@ function AdminSidebar() {
       icon: <BookOpen size={20} />,
     },
     {
+      name: "Course Section Assignment",
+      href: "/admin/course-section-assignment",
+      icon: <BookOpen size={20} />,
+    },
+    {
       name: "Instructor Registration",
       href: "/admin/instructor-register",
       icon: <User size={20} />,

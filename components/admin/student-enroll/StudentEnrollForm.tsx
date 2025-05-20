@@ -75,7 +75,7 @@ interface Enrollment {
   status: 'pending' | 'approved' | 'completed';
 }
 
-// Update the Course interface to make optional fields nullable
+// Update the Course interface to match DB schema
 interface Course {
   course_id: number;
   title: string;
@@ -84,6 +84,7 @@ interface Course {
   prerequisite?: number | null;
   no_weeks?: number | null;
   school_id?: number | null;
+  credit_hours?: number | null;
   created_at?: string;
   updated_at?: string;
 }
@@ -281,17 +282,36 @@ export function StudentEnrollForm() {
   // Fetch courses
   useEffect(() => {
     async function fetchCourses() {
+      if (!userData?.details?.uni_id) return;
+      
       try {
-        const { data, error } = await supabase
-          .from('courses')
-          .select('course_id, title, course_code, description, prerequisite, no_weeks, school_id, created_at, updated_at');
+        // First get all schools for the university
+        const { data: schoolsData, error: schoolsError } = await supabase
+          .from('school')
+          .select('id')
+          .eq('uni_id', userData.details.uni_id);
         
-        if (error) throw error;
+        if (schoolsError) throw schoolsError;
+        
+        if (!schoolsData || schoolsData.length === 0) {
+          setCourses([]);
+          return;
+        }
 
-        // Type assertion to ensure data matches Course interface
-        const coursesData = (data || []) as Course[];
-        setCourses(coursesData);
+        // Get the school IDs
+        const schoolIds = schoolsData.map(school => school.id);
+
+        // Then fetch courses for these schools
+        const { data: coursesData, error: coursesError } = await supabase
+          .from('courses')
+          .select('course_id, title, course_code, description, prerequisite, no_weeks, school_id, credit_hours, created_at, updated_at')
+          .in('school_id', schoolIds);
+        
+        if (coursesError) throw coursesError;
+
+        setCourses(coursesData || []);
       } catch (error) {
+        console.error('Error fetching courses:', error);
         toast({
           title: "Error",
           description: "Failed to fetch courses",
@@ -301,7 +321,7 @@ export function StudentEnrollForm() {
       }
     }
     fetchCourses();
-  }, []);
+  }, [userData?.details?.uni_id]);
 
   // Handle select all checkbox
   const handleSelectAll = (checked: boolean) => {
