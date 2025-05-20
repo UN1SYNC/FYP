@@ -115,13 +115,13 @@ export function CourseAssignmentForm() {
   // Fetch schools based on user's university
   useEffect(() => {
     const fetchSchools = async () => {
-      if (!userData?.details?.uni_id) return;
+      if (!userData?.university_id) return;
       
       try {
         const { data, error } = await supabase
           .from('school')
           .select('id, name, uni_id')
-          .eq('uni_id', userData.details.uni_id);
+          .eq('uni_id', userData?.university_id);
         
         if (error) {
           console.error("Error fetching schools:", error);
@@ -202,6 +202,7 @@ export function CourseAssignmentForm() {
       const { data, error } = await supabase
         .from("batch")
         .select("batch_id, intake, degree_id")
+        .eq('university_id', userData?.university_id)
         .order("intake", { ascending: false });
 
       if (error) {
@@ -273,7 +274,7 @@ export function CourseAssignmentForm() {
   // Fetch instructors
   useEffect(() => {
     const fetchInstructors = async () => {
-      if (!userData?.details?.uni_id) return;
+      if (!userData?.university_id) return;
       
       const { data, error } = await supabase
         .from("instructors")
@@ -284,7 +285,7 @@ export function CourseAssignmentForm() {
             name
           )
         `)
-        .eq('university_id', userData.details.uni_id);
+        .eq('university_id', userData?.university_id);
 
       if (error) {
         console.error("Error fetching instructors:", error);
@@ -317,7 +318,7 @@ export function CourseAssignmentForm() {
     };
 
     fetchInstructors();
-  }, [supabase, toast, userData?.details?.uni_id]);
+  }, [supabase, toast, userData?.university_id]);
 
   // Fetch courses when section changes
   useEffect(() => {

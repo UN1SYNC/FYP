@@ -118,7 +118,7 @@ export function InstructorRegisterForm() {
             address: values.address,
             phone: phoneNumber,
             role: "instructor",
-            university_id: userData?.details?.uni_id,
+            university_id: userData?.university_id,
           }
         }
       });
@@ -133,7 +133,7 @@ export function InstructorRegisterForm() {
           specialization: values.specialization,
           designation: values.designation,
           experience: values.experience,
-          university_id: userData?.details?.uni_id,
+          university_id: userData?.university_id,
         });
 
       if (instructorError) throw instructorError;

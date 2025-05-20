@@ -142,13 +142,13 @@ export function StudentEnrollForm() {
   // Fetch schools on component mount
   useEffect(() => {
     async function fetchSchools() {
-      if (!userData?.details?.uni_id) return;
+      if (!userData?.university_id) return;
       
       try {
         const { data, error } = await supabase
           .from('school')
           .select('id, name, uni_id')
-          .eq('uni_id', userData.details.uni_id);
+          .eq('uni_id', userData?.university_id);
         
         if (error) throw error;
         setSchools(data || []);
@@ -214,7 +214,8 @@ export function StudentEnrollForm() {
       const { data, error } = await supabase
         .from('batch')
         .select('batch_id, intake, degree_id')
-        .eq('degree_id', degreeId);
+        .eq('degree_id', degreeId)
+        .eq('university_id', userData?.university_id);
       
       if (error) throw error;
       setBatches(data || []);
@@ -282,14 +283,14 @@ export function StudentEnrollForm() {
   // Fetch courses
   useEffect(() => {
     async function fetchCourses() {
-      if (!userData?.details?.uni_id) return;
+      if (!userData?.university_id) return;
       
       try {
         // First get all schools for the university
         const { data: schoolsData, error: schoolsError } = await supabase
           .from('school')
           .select('id')
-          .eq('uni_id', userData.details.uni_id);
+          .eq('uni_id', userData?.university_id);
         
         if (schoolsError) throw schoolsError;
         
@@ -321,7 +322,7 @@ export function StudentEnrollForm() {
       }
     }
     fetchCourses();
-  }, [userData?.details?.uni_id]);
+  }, [userData?.university_id]);
 
   // Handle select all checkbox
   const handleSelectAll = (checked: boolean) => {

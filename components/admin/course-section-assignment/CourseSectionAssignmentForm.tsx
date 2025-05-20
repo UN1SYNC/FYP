@@ -82,7 +82,7 @@ export function CourseSectionAssignmentForm() {
         const { data, error } = await supabase
           .from('school')
           .select('*')
-          .eq('uni_id', userData?.details?.uni_id);
+          .eq('uni_id', userData?.university_id);
           
         if (error) throw error;
         setSchools(data || []);
@@ -96,7 +96,7 @@ export function CourseSectionAssignmentForm() {
       }
     };
     fetchSchools();
-  }, [userData?.details?.uni_id, supabase, toast]);
+  }, [userData?.university_id, supabase, toast]);
 
   // Fetch degree programs when school is selected
   useEffect(() => {
@@ -131,7 +131,8 @@ export function CourseSectionAssignmentForm() {
           const { data, error } = await supabase
             .from('batch')
             .select('*')
-            .eq('degree_id', selectedDegreeProgram);
+            .eq('degree_id', selectedDegreeProgram)
+            .eq('university_id', userData?.university_id);
             
           if (error) throw error;
           setBatches(data || []);
