@@ -103,13 +103,13 @@ export function SectionRegisterForm() {
   // Fetch schools
   useEffect(() => {
     const fetchSchools = async () => {
-      if (!userData?.details?.uni_id) return;
+      if (!userData?.university_id) return;
 
       try {
         const { data, error } = await supabase
           .from('school')
           .select('*')
-          .eq('uni_id', userData.details.uni_id);
+          .eq('uni_id', userData?.university_id);
 
         if (error) throw error;
         setSchools(data || []);
@@ -155,7 +155,8 @@ export function SectionRegisterForm() {
       try {
         const { data, error } = await supabase
           .from('batch')
-          .select('*');
+          .select('*')
+          .eq('university_id', userData?.university_id);
 
         if (error) throw error;
         setBatches(data || []);

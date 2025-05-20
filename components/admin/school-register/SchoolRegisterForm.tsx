@@ -52,7 +52,7 @@ export function SchoolRegisterForm() {
   });
 
   const onSubmit = async (values: SchoolFormValues) => {
-    if (!userData?.details?.uni_id) {
+    if (!userData?.university_id) {
       toast({
         title: "Error",
         description: "University ID not found",
@@ -68,7 +68,7 @@ export function SchoolRegisterForm() {
         .from('school')
         .insert({
           name: values.schoolName,
-          uni_id: userData.details.uni_id,
+          uni_id: userData?.university_id,
         });
 
       if (error) throw error;
