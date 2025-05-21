@@ -9,11 +9,11 @@ import Loading from "@/components/ui/loading";
 
 interface FileUploadProps {
   onFileSelect: (file: File) => void;
-  submissionId: string;
+  assignmentId: string;
   courseId: string;
 }
 
-export const FileUpload = ({ onFileSelect, submissionId, courseId }: FileUploadProps) => {
+export const FileUpload = ({ onFileSelect, assignmentId, courseId }: FileUploadProps) => {
   const [isDragging, setIsDragging] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const supabase = createClient();
